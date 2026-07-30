@@ -1302,7 +1302,7 @@ function loadIframe(tab) {
   wrap.style.height = Math.round(cfg.h*cfg.scale)+'px';
   iframe.onload = () => { 
     iframeReady = true;
-    requestAnimationFrame(applyLiveOverrides);
+    requestAnimationFrame(() => applyLiveOverrides());
   };
   iframe.src = buildIframeUrl(tab);
 }
