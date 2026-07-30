@@ -69,6 +69,12 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
 .links.show{display:block}
 .result-url{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);word-break:break-all;margin:8px 0 12px;display:flex;gap:8px;justify-content:space-between;align-items:center}
 .copy-btn{background:var(--accent);border:0;border-radius:6px;padding:5px 10px;color:white;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap}
+.btn-hd{background:linear-gradient(135deg,#ec4899,#7c3aed)}
+.btn:disabled{opacity:.55;cursor:wait}
+.hd-status{display:none;margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);font-size:14px;line-height:1.5}
+.hd-status.show{display:block}
+.hd-status.success{border-color:#22c55e;color:#bbf7d0}
+.hd-status.error{border-color:#ef4444;color:#fecaca}
 @media(max-width:900px){.product-controls{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){.upload-grid,.upload-grid.five,.field-row,.product-controls,.toggle-row{grid-template-columns:1fr}.card{padding:22px}h1{font-size:48px}}
 </style>
@@ -215,6 +221,8 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
 
   <button class="btn" onclick="showPreview()">👁️ PRÉVISUALISER LES FORMATS</button>
   <button class="btn" onclick="showLinks()">🔗 CRÉER LES LIENS GOODS</button>
+  <button class="btn btn-hd" id="generateHdBtn" onclick="generateGoodsHD()">🚀 GÉNÉRER LES 3 FORMATS HD</button>
+  <div class="hd-status" id="hdStatus" role="status" aria-live="polite"></div>
 
   <div class="preview-card" id="previewCard">
     <div class="tabs">
@@ -237,6 +245,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
 <script>
 const CLOUD_NAME = "dyvmftiyu";
 const UPLOAD_PRESET = "banner_generator";
+const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/62irmz92j6x8l6a4d1v9mnpxfbtmlwmu";
 const BASE_URL = new URL('.', window.location.href).href.replace(/\/$/, '');
 const urls = {};
 let currentGoodsTab = 'desktop';
@@ -380,6 +389,49 @@ function showLinks() {
   });
   box.innerHTML = html;
   box.classList.add('show');
+}
+
+function setHdStatus(message, type) {
+  const box = document.getElementById('hdStatus');
+  box.textContent = message;
+  box.className = 'hd-status show' + (type ? ' ' + type : '');
+}
+
+async function generateGoodsHD() {
+  const button = document.getElementById('generateHdBtn');
+  if (!urls.figure1_url) {
+    setHdStatus('Ajoutez au moins le Produit 1 avant de lancer la génération HD.', 'error');
+    return;
+  }
+
+  const payload = getParams();
+  payload.job_id = 'goods_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  payload.request_type = 'hd';
+
+  // Le scénario Make est linéaire : les emplacements non utilisés réemploient
+  // temporairement le produit 1, puis figure_count les masque dans le rendu.
+  for (let i = 2; i <= 5; i++) {
+    if (!payload['figure' + i + '_url']) payload['figure' + i + '_url'] = payload.figure1_url;
+  }
+
+  button.disabled = true;
+  button.textContent = '⏳ ENVOI À MAKE...';
+  setHdStatus('Envoi des images et des réglages à Make…');
+
+  try {
+    const response = await fetch(MAKE_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    setHdStatus('C’est parti ! Make génère les formats Web, Mobile et Story. Identifiant : ' + payload.job_id, 'success');
+  } catch (error) {
+    setHdStatus('Make n’a pas reçu la demande. Vérifiez que le scénario est activé, puis réessayez. (' + error.message + ')', 'error');
+  } finally {
+    button.disabled = false;
+    button.textContent = '🚀 GÉNÉRER LES 3 FORMATS HD';
+  }
 }
 
 updateFigureVisibility();
