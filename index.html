@@ -1484,6 +1484,59 @@ function updateBackgroundGenerationStatus(message) {
   status.textContent=(message?message+' ':'')+(BACKGROUND_DAILY_LIMIT-usage.count)+' génération(s) restante(s) aujourd’hui.';
 }
 
+function extractBackgroundImageUrl(value, depth=0) {
+  if (depth > 6 || value == null) return '';
+  if (typeof value === 'string') {
+    const clean = value.trim().replace(/^["']|["']$/g, '');
+    if (/^https?:\/\/\S+$/i.test(clean)) return clean;
+    try {
+      return extractBackgroundImageUrl(JSON.parse(clean), depth + 1);
+    } catch (_) {
+      const match = clean.match(/https?:\/\/[^\s"'<>\\]+/i);
+      return match ? match[0] : '';
+    }
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = extractBackgroundImageUrl(item, depth + 1);
+      if (found) return found;
+    }
+    return '';
+  }
+  if (typeof value === 'object') {
+    const preferredKeys = ['secure_url','secureUrl','url','image_url','imageUrl','output','data','body'];
+    for (const key of preferredKeys) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        const found = extractBackgroundImageUrl(value[key], depth + 1);
+        if (found) return found;
+      }
+    }
+    for (const nested of Object.values(value)) {
+      const found = extractBackgroundImageUrl(nested, depth + 1);
+      if (found) return found;
+    }
+  }
+  return '';
+}
+
+function verifyBackgroundImage(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const timer = setTimeout(() => reject(new Error('Le chargement du fond a expiré.')), 20000);
+    image.onload = () => {
+      clearTimeout(timer);
+      image.naturalWidth > 0
+        ? resolve(url)
+        : reject(new Error('Le fond reçu est vide.'));
+    };
+    image.onerror = () => {
+      clearTimeout(timer);
+      reject(new Error('Make a renvoyé une URL de fond introuvable (404).'));
+    };
+    image.src = url;
+  });
+}
+
 async function generateBackgroundIfNeeded(force=false) {
   const mode=document.querySelector('input[name="background_mode"]:checked')?.value||'upload';
   if(mode!=='generate') return;
@@ -1506,9 +1559,10 @@ async function generateBackgroundIfNeeded(force=false) {
   });
   const text=await response.text();
   if(!response.ok) throw new Error('Fond IA : HTTP '+response.status);
-  let data;try{data=JSON.parse(text);}catch(_){data={secure_url:text};}
-  const generatedUrl=data.secure_url||data.url;
+  let data;try{data=JSON.parse(text);}catch(_){data=text;}
+  const generatedUrl=extractBackgroundImageUrl(data);
   if(!generatedUrl) throw new Error('Cloudinary n’a pas renvoyé le fond généré.');
+  await verifyBackgroundImage(generatedUrl);
   urls.bg_url=generatedUrl;
   localStorage.setItem('tcg_generated_background_url',generatedUrl);
   usage.count+=1;
