@@ -273,7 +273,10 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;hei
           <label>Instruction envoyée à OpenAI</label>
           <input type="text" id="background_prompt" value="Peux-tu me générer un visuel horizontal inspiré de mon produit, sans texte et sans personnage ?">
         </div>
-        <div class="mini-status">La Display sera utilisée comme référence. La génération ne se lance qu’au clic sur le bouton HD.</div>
+        <button type="button" class="btn" id="generateBackgroundBtn" onclick="generateAndPreviewBackground()" style="margin-top:12px;padding:13px 18px;font-size:13px;">
+          ✨ GÉNÉRER ET PRÉVISUALISER LE FOND
+        </button>
+        <div class="mini-status" id="backgroundGenerationStatus">La Display sera utilisée comme référence. Limite : 5 générations par jour sur ce navigateur.</div>
       </div>
     </div>
 
@@ -1458,12 +1461,32 @@ async function uploadToCloudinary(input, key, zoneId, prevId, prevLargeId) {
   } catch(err){zone.classList.remove('uploading');zone.classList.add('error');if(spin)spin.style.display='none';label.textContent='Erreur';}
 }
 
-async function generateBackgroundIfNeeded() {
+const BACKGROUND_DAILY_LIMIT=5;
+
+function backgroundUsageToday() {
+  const today=new Date().toISOString().slice(0,10);
+  let saved={date:today,count:0};
+  try{saved=JSON.parse(localStorage.getItem('tcg_background_usage')||'null')||saved;}catch(_){}
+  if(saved.date!==today) saved={date:today,count:0};
+  return saved;
+}
+
+function updateBackgroundGenerationStatus(message) {
+  const status=document.getElementById('backgroundGenerationStatus');
+  if(!status) return;
+  const usage=backgroundUsageToday();
+  status.textContent=(message?message+' ':'')+(BACKGROUND_DAILY_LIMIT-usage.count)+' génération(s) restante(s) aujourd’hui.';
+}
+
+async function generateBackgroundIfNeeded(force=false) {
   const mode=document.querySelector('input[name="background_mode"]:checked')?.value||'upload';
   if(mode!=='generate') return;
+  if(urls.bg_url&&!force) return;
   const referenceUrl=urls.display_url||urls.booster_url||'';
   if(!referenceUrl) throw new Error('Ajoute une Display ou un Booster : il sert de référence au fond.');
-  document.getElementById('statusMsg').textContent='Création du fond avec OpenAI… environ une minute.';
+  const usage=backgroundUsageToday();
+  if(usage.count>=BACKGROUND_DAILY_LIMIT) throw new Error('La limite de 5 fonds ChatGPT par jour est atteinte sur ce navigateur.');
+  updateBackgroundGenerationStatus('Création du fond avec ChatGPT… environ une minute.');
   const response=await fetch(BACKGROUND_WEBHOOK_URL,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -1481,9 +1504,28 @@ async function generateBackgroundIfNeeded() {
   const generatedUrl=data.secure_url||data.url;
   if(!generatedUrl) throw new Error('Cloudinary n’a pas renvoyé le fond généré.');
   urls.bg_url=generatedUrl;
+  usage.count+=1;
+  localStorage.setItem('tcg_background_usage',JSON.stringify(usage));
   const preview=document.getElementById('prev-bg');
   if(preview) preview.src=generatedUrl;
   sendToIframe();
+  updateBackgroundGenerationStatus('✅ Fond généré et appliqué à la prévisualisation.');
+}
+
+async function generateAndPreviewBackground() {
+  const button=document.getElementById('generateBackgroundBtn');
+  button.disabled=true;
+  button.textContent='⏳ GÉNÉRATION DU FOND…';
+  try{
+    await generateBackgroundIfNeeded(true);
+    document.getElementById('editorCard').classList.add('show');
+    loadIframe(currentTab);
+  }catch(error){
+    updateBackgroundGenerationStatus('❌ '+error.message);
+  }finally{
+    button.disabled=false;
+    button.textContent='✨ GÉNÉRER ET PRÉVISUALISER LE FOND';
+  }
 }
 
 document.getElementById('bannerForm').addEventListener('submit', async function(e) {
@@ -1549,6 +1591,7 @@ function updateBackgroundMode() {
   const mode=document.querySelector('input[name="background_mode"]:checked')?.value||'upload';
   document.getElementById('backgroundUploadPanel').hidden=mode!=='upload';
   document.getElementById('backgroundGeneratePanel').hidden=mode!=='generate';
+  if(mode==='generate') updateBackgroundGenerationStatus('');
   sendToIframe();
 }
 
