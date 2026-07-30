@@ -44,6 +44,9 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:60px;letter-spacing:2px;line-he
 .toggle-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
 .toggle-pill{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
 .toggle-pill input{accent-color:var(--accent2)}
+.glow-control{display:flex;align-items:center;gap:10px}
+.glow-control input[type=color]{flex:1;min-width:54px}
+.glow-control input[type=color]:disabled{opacity:.35}
 .product-controls{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:16px}
 .product-control{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px}
 .product-control-title{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent2);margin-bottom:10px}
@@ -136,7 +139,10 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
       </div>
       <div class="field">
         <label>Lueur produits</label>
-        <input type="color" id="product_glow" value="#ffffff" oninput="sendToIframe()">
+        <div class="glow-control">
+          <input type="color" id="product_glow" value="#ffffff" oninput="sendToIframe()">
+          <label class="toggle-pill"><input type="checkbox" id="product_glow_enabled" checked onchange="toggleProductGlow()"> Avec lueur</label>
+        </div>
       </div>
       <div class="field">
         <label>Texte vidéo</label>
@@ -273,7 +279,7 @@ function getParams() {
     figure3_url:urls.figure3_url || '',
     figure4_url:urls.figure4_url || '',
     figure5_url:urls.figure5_url || '',
-    product_glow:document.getElementById('product_glow').value,
+    product_glow:document.getElementById('product_glow_enabled').checked ? document.getElementById('product_glow').value : 'transparent',
     series_text:document.getElementById('series_text').value,
     ...getProductControls()
   };
@@ -343,6 +349,12 @@ function onProductSlider(el) {
   sendToIframe();
 }
 
+function toggleProductGlow() {
+  const enabled = document.getElementById('product_glow_enabled').checked;
+  document.getElementById('product_glow').disabled = !enabled;
+  sendToIframe();
+}
+
 function showPreview() {
   setupControlsDock();
   document.getElementById('previewCard').classList.add('show');
@@ -364,7 +376,9 @@ function switchGoodsTab(kind, tabEl) {
   if (tabEl) tabEl.classList.add('active');
   const cfg = goodsConfig[kind];
   const iframe = document.getElementById('goodsIframe');
-  document.querySelector('.preview-wrap').style.height = (cfg.h * cfg.scale) + 'px';
+  const previewWrap = document.querySelector('.preview-wrap');
+  previewWrap.style.height = (cfg.h * cfg.scale) + 'px';
+  previewWrap.style.borderRadius = (kind === 'social' || kind === 'video') ? '0' : '12px';
   iframe.style.transform = 'scale(' + cfg.scale + ')';
   iframe.style.width = cfg.w + 'px';
   iframe.style.height = cfg.h + 'px';
