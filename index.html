@@ -1551,6 +1551,33 @@ function verifyBackgroundImage(url) {
   });
 }
 
+function detectImageMime(bytes) {
+  if (bytes.length >= 8 &&
+      bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return 'image/png';
+  if (bytes.length >= 3 &&
+      bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg';
+  if (bytes.length >= 12 &&
+      String.fromCharCode(...bytes.slice(0,4)) === 'RIFF' &&
+      String.fromCharCode(...bytes.slice(8,12)) === 'WEBP') return 'image/webp';
+  return '';
+}
+
+async function uploadGeneratedBackground(buffer, mimeType) {
+  const extension = mimeType === 'image/jpeg' ? 'jpg' : mimeType.split('/')[1];
+  const formData = new FormData();
+  formData.append('file', new Blob([buffer], {type:mimeType}), 'fond-openai.'+extension);
+  formData.append('upload_preset', UPLOAD_PRESET);
+  const uploadResponse = await fetch('https://api.cloudinary.com/v1_1/'+CLOUD_NAME+'/image/upload', {
+    method:'POST',
+    body:formData
+  });
+  const uploadData = await uploadResponse.json();
+  if (!uploadResponse.ok || !uploadData.secure_url) {
+    throw new Error('Cloudinary n’a pas pu enregistrer le fond généré.');
+  }
+  return uploadData.secure_url;
+}
+
 async function generateBackgroundIfNeeded(force=false) {
   const mode=document.querySelector('input[name="background_mode"]:checked')?.value||'upload';
   if(mode!=='generate') return;
@@ -1571,11 +1598,20 @@ async function generateBackgroundIfNeeded(force=false) {
       background_reference_url:referenceUrl
     })
   });
-  const text=await response.text();
+  const responseBuffer=await response.arrayBuffer();
   if(!response.ok) throw new Error('Fond IA : HTTP '+response.status);
-  let data;try{data=JSON.parse(text);}catch(_){data=text;}
-  const generatedUrl=extractBackgroundImageUrl(data);
-  if(!generatedUrl) throw new Error('Cloudinary n’a pas renvoyé le fond généré.');
+  const bytes=new Uint8Array(responseBuffer);
+  const imageMime=detectImageMime(bytes);
+  let generatedUrl='';
+  if(imageMime) {
+    updateBackgroundGenerationStatus('Image reçue de Make, enregistrement sur Cloudinary…');
+    generatedUrl=await uploadGeneratedBackground(responseBuffer,imageMime);
+  } else {
+    const text=new TextDecoder().decode(bytes);
+    let data;try{data=JSON.parse(text);}catch(_){data=text;}
+    generatedUrl=extractBackgroundImageUrl(data);
+  }
+  if(!generatedUrl) throw new Error('Make n’a renvoyé ni image ni URL exploitable.');
   await verifyBackgroundImage(generatedUrl);
   urls.bg_url=generatedUrl;
   localStorage.setItem('tcg_generated_background_url',generatedUrl);
