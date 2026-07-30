@@ -49,6 +49,22 @@ body{width:1080px;height:1920px;overflow:hidden;background:transparent;position:
 .motion-enabled .b-back-l{--motion-x:calc(-5px * var(--motion-mult,.45));--motion-y:calc(7px * var(--motion-mult,.45));--motion-duration:5.3s;}
 .motion-enabled .b-back-r{--motion-x:calc(5px * var(--motion-mult,.45));--motion-y:calc(-7px * var(--motion-mult,.45));--motion-duration:5.8s;}
 .motion-enabled .disp{--motion-x:calc(0px * var(--motion-mult,.45));--motion-y:calc(-9px * var(--motion-mult,.45));--motion-duration:4.9s;}
+.motion-enabled .disp img{animation:storyDisplayZoom .9s cubic-bezier(.18,.86,.28,1.18) both}
+.motion-enabled .b-back-l img{animation:storyBoosterLeft .95s cubic-bezier(.18,.82,.25,1) .12s both}
+.motion-enabled .b-back-r img{animation:storyBoosterRight .95s cubic-bezier(.18,.82,.25,1) .12s both}
+@keyframes storyDisplayZoom{
+  0%{opacity:0;transform:scale(.28)}
+  72%{opacity:1;transform:scale(1.08)}
+  100%{opacity:1;transform:scale(1)}
+}
+@keyframes storyBoosterLeft{
+  0%{opacity:0;transform:translateX(-520px) perspective(300px) rotateY(16deg) scaleX(.9)}
+  100%{opacity:1;transform:translateX(0) perspective(300px) rotateY(16deg) scaleX(.9)}
+}
+@keyframes storyBoosterRight{
+  0%{opacity:0;transform:translateX(520px) perspective(300px) rotateY(-16deg) scaleX(.9)}
+  100%{opacity:1;transform:translateX(0) perspective(300px) rotateY(-16deg) scaleX(.9)}
+}
 @keyframes bannerFloat{0%,100%{translate:0 0;}50%{translate:var(--motion-x,0) var(--motion-y,-6px);}}
 @keyframes bannerBgDrift{0%{transform:scale(1);filter:brightness(0.78) saturate(2.1) contrast(1.12);}100%{transform:scale(1.04);filter:brightness(0.83) saturate(2.18) contrast(1.14);}}
 @media (prefers-reduced-motion:reduce){.motion-enabled *{animation:none!important;}}
