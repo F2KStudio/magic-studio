@@ -51,7 +51,7 @@ const count = Math.max(1, Math.min(5, Number(g('figure_count') || 3)));
 document.querySelector('.figures').classList.add('count-' + count);
 const bgUrl = g('bg_url');
 if (bgUrl) document.querySelector('.bg').style.backgroundImage = "url('" + bgUrl + "')";
-else document.querySelector('.bg').style.backgroundColor = g('fallback_bg') || '#06233a';
+else document.querySelector('.bg').style.backgroundImage = 'linear-gradient(135deg,' + (g('fallback_bg') || '#06233a') + ',' + (g('fallback_bg2') || '#2f80c9') + ')';
 document.querySelectorAll('img[data-src]').forEach(img => {
   const key = img.getAttribute('data-src');
   const url = g(key);

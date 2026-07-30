@@ -143,8 +143,8 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
         </select>
       </div>
       <div class="field">
-        <label>Fond</label>
-        <input type="text" id="fallback_bg" value="#06233a" oninput="sendToIframe()" placeholder="#06233a si aucun fond">
+        <label>Couleur du fond</label>
+        <input type="color" id="fallback_bg" value="#06233a" oninput="sendToIframe()">
       </div>
       <div class="field">
         <label>Lueur produits</label>
@@ -229,27 +229,33 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
     <div class="card-title"><span class="num">3</span> Fond optionnel</div>
     <div class="background-mode">
       <label class="background-choice">
-        <input type="radio" name="background_mode" value="upload" checked onchange="updateBackgroundMode()">
-        <span><strong>Importer mon fond</strong><small>JPG ou PNG depuis votre ordinateur</small></span>
+        <input type="radio" name="background_mode" value="gradient" checked onchange="updateBackgroundMode()">
+        <span><strong>Dégradé coloré</strong><small>Choisissez deux couleurs pour le fond</small></span>
       </label>
       <label class="background-choice">
-        <input type="radio" name="background_mode" value="generate" onchange="updateBackgroundMode()">
-        <span><strong>Générer avec OpenAI</strong><small>Inspiré du Produit 1, sans texte ni personnage</small></span>
+        <input type="radio" name="background_mode" value="upload" onchange="updateBackgroundMode()">
+        <span><strong>Importer mon fond</strong><small>JPG ou PNG depuis votre ordinateur</small></span>
       </label>
     </div>
-    <div class="background-panel" id="backgroundUploadPanel">
+    <div class="background-panel" id="backgroundGradientPanel">
+      <div class="field-row">
+        <div class="field">
+          <label>Couleur principale</label>
+          <input type="color" value="#06233a" oninput="document.getElementById('fallback_bg').value=this.value;sendToIframe()">
+        </div>
+        <div class="field">
+          <label>Couleur secondaire</label>
+          <input type="color" id="fallback_bg2" value="#2f80c9" oninput="sendToIframe()">
+        </div>
+      </div>
+      <div class="hint">Le dégradé est appliqué automatiquement derrière les produits.</div>
+    </div>
+    <div class="background-panel" id="backgroundUploadPanel" hidden>
       <div class="upload-zone" id="zone-bg">
         <input type="file" accept="image/*" onchange="uploadToCloudinary(this,'bg_url','zone-bg','prev-bg')">
         <span class="upload-icon">🌌</span><div class="spinner-small" style="display:none" id="spin-bg"></div><img class="preview-img" id="prev-bg" style="width:120px;height:58px;object-fit:cover">
         <span class="upload-label">Fond / Background</span><span class="upload-sub">Optionnel - sinon fond bleu automatique</span>
       </div>
-    </div>
-    <div class="background-panel" id="backgroundGeneratePanel" hidden>
-      <div class="field background-prompt">
-        <label>Instruction envoyée à OpenAI</label>
-        <input type="text" id="background_prompt" value="Peux-tu me générer un visuel horizontal inspiré de mon produit, sans texte et sans personnage ?" oninput="sendToIframe()">
-      </div>
-      <div class="hint">Le Produit 1 sera utilisé comme image de référence. La génération ne se lance que lorsque vous cliquez sur « Générer les 3 formats HD ».</div>
     </div>
   </div>
 
@@ -280,7 +286,6 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
 const CLOUD_NAME = "dyvmftiyu";
 const UPLOAD_PRESET = "banner_generator";
 const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/62irmz92j6x8l6a4d1v9mnpxfbtmlwmu";
-const BACKGROUND_WEBHOOK_URL = "https://hook.eu1.make.com/tc2y57ua2zq3bg62pq6oc8qtr1zha1oh";
 const BASE_URL = new URL('.', window.location.href).href.replace(/\/$/, '');
 const urls = {};
 let currentGoodsTab = 'desktop';
@@ -292,14 +297,15 @@ const goodsConfig = {
 };
 
 function getParams() {
-  const backgroundMode = document.querySelector('input[name="background_mode"]:checked')?.value || 'upload';
+  const backgroundMode = document.querySelector('input[name="background_mode"]:checked')?.value || 'gradient';
   return {
     template_type:'goods',
     background_mode:backgroundMode,
-    background_prompt:document.getElementById('background_prompt').value,
+    background_prompt:'',
     background_reference_url:urls.figure1_url || '',
     figure_count:document.getElementById('figure_count').value,
     fallback_bg:document.getElementById('fallback_bg').value,
+    fallback_bg2:document.getElementById('fallback_bg2').value,
     bg_url:urls.bg_url || '',
     left1_url:urls.left1_url || '',
     left2_url:urls.left2_url || '',
@@ -444,35 +450,6 @@ function setHdStatus(message, type) {
   box.className = 'hd-status show' + (type ? ' ' + type : '');
 }
 
-async function generateBackgroundIfNeeded() {
-  const mode = document.querySelector('input[name="background_mode"]:checked')?.value || 'upload';
-  if (mode !== 'generate') return;
-  if (!urls.figure1_url) throw new Error('Ajoutez le Produit 1 : il sert de référence au fond.');
-
-  setHdStatus('Création du fond avec OpenAI… cela peut prendre environ une minute.');
-  const response = await fetch(BACKGROUND_WEBHOOK_URL, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      template_type: 'goods-background',
-      request_type: 'generate_background',
-      background_mode: 'generate',
-      background_prompt: document.getElementById('background_prompt').value,
-      background_reference_url: urls.figure1_url
-    })
-  });
-  const text = await response.text();
-  if (!response.ok) throw new Error('Fond IA : HTTP ' + response.status);
-  let data;
-  try { data = JSON.parse(text); } catch (_) { data = {secure_url:text}; }
-  const generatedUrl = data.secure_url || data.url;
-  if (!generatedUrl) throw new Error('Cloudinary n’a pas renvoyé le fond généré.');
-  urls.bg_url = generatedUrl;
-  const preview = document.getElementById('prev-bg');
-  if (preview) preview.src = generatedUrl;
-  sendToIframe();
-}
-
 async function generateGoodsHD() {
   const button = document.getElementById('generateHdBtn');
   if (!urls.figure1_url) {
@@ -484,11 +461,10 @@ async function generateGoodsHD() {
   button.textContent = '⏳ PRÉPARATION...';
 
   try {
-    await generateBackgroundIfNeeded();
     const payload = getParams();
     payload.job_id = 'goods_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     payload.request_type = 'hd';
-    if (payload.background_mode === 'generate') payload.background_mode = 'upload';
+    if (payload.background_mode === 'gradient') payload.bg_url = '';
 
     // Le scénario Make est linéaire : les emplacements non utilisés réemploient
     // temporairement le produit 1, puis figure_count les masque dans le rendu.
@@ -514,9 +490,9 @@ async function generateGoodsHD() {
 }
 
 function updateBackgroundMode() {
-  const mode = document.querySelector('input[name="background_mode"]:checked')?.value || 'upload';
+  const mode = document.querySelector('input[name="background_mode"]:checked')?.value || 'gradient';
   document.getElementById('backgroundUploadPanel').hidden = mode !== 'upload';
-  document.getElementById('backgroundGeneratePanel').hidden = mode !== 'generate';
+  document.getElementById('backgroundGradientPanel').hidden = mode !== 'gradient';
   sendToIframe();
 }
 
