@@ -277,6 +277,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;hei
           ✨ GÉNÉRER ET PRÉVISUALISER LE FOND
         </button>
         <div class="mini-status" id="backgroundGenerationStatus">La Display sera utilisée comme référence. Limite : 5 générations par jour sur ce navigateur.</div>
+        <button type="button" class="btn-soft" onclick="resetBackgroundGenerationQuota()" style="margin-top:8px;padding:7px 10px;font-size:10px;">🔐 RÉINITIALISER LE QUOTA</button>
       </div>
     </div>
 
@@ -1482,6 +1483,19 @@ function updateBackgroundGenerationStatus(message) {
   if(!status) return;
   const usage=backgroundUsageToday();
   status.textContent=(message?message+' ':'')+(BACKGROUND_DAILY_LIMIT-usage.count)+' génération(s) restante(s) aujourd’hui.';
+}
+
+function resetBackgroundGenerationQuota() {
+  const code=window.prompt('Code de réinitialisation du quota :');
+  if(code===null) return;
+  if(code!=='1234') {
+    window.alert('Code incorrect.');
+    return;
+  }
+  const today=new Date().toISOString().slice(0,10);
+  localStorage.setItem('tcg_background_usage',JSON.stringify({date:today,count:0}));
+  updateBackgroundGenerationStatus('✅ Quota réinitialisé.');
+  window.alert('Quota réinitialisé : 5 générations disponibles.');
 }
 
 function extractBackgroundImageUrl(value, depth=0) {
