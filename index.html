@@ -26,6 +26,15 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .card-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--accent2);margin-bottom:20px;display:flex;align-items:center;gap:8px;}
 .card-title .num{width:24px;height:24px;background:var(--accent);border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center;color:white;font-family:'DM Sans',sans-serif;font-weight:600;}
 .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.background-mode{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.background-choice{display:flex;align-items:flex-start;gap:10px;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;cursor:pointer}
+.background-choice:has(input:checked){border-color:var(--accent2);background:rgba(124,58,237,.15)}
+.background-choice input{margin-top:2px;accent-color:var(--accent2)}
+.background-choice strong{display:block;font-size:12px;letter-spacing:.7px;text-transform:uppercase}
+.background-choice small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.background-panel[hidden]{display:none}
+.background-prompt{margin-top:10px}
+@media(max-width:620px){.background-mode{grid-template-columns:1fr}}
 .upload-grid.three{grid-template-columns:1fr 1fr 1fr;}
 .upload-grid.full{grid-template-columns:1fr;}
 .upload-zone{position:relative;border:1.5px dashed var(--border);border-radius:12px;padding:20px 16px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface2);min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
@@ -237,15 +246,34 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;hei
         </div>
       </div>
       <div class="divider"></div>
-      <div class="upload-grid full">
-        <div class="upload-zone" id="zone-bg">
-          <input type="file" accept="image/*" onchange="uploadToCloudinary(this,'bg_url','zone-bg','prev-bg')">
-          <span class="upload-icon">🌌</span>
-          <div class="spinner-small" style="display:none" id="spin-bg"></div>
-          <img class="preview-img" id="prev-bg" style="width:120px;height:50px;object-fit:cover;">
-          <span class="upload-label" data-i18n="background">Fond / Background</span>
-          <span class="upload-sub" data-i18n="backgroundSub">JPG ou PNG — image clé de la série</span>
+      <div class="background-mode">
+        <label class="background-choice">
+          <input type="radio" name="background_mode" value="upload" checked onchange="updateBackgroundMode()">
+          <span><strong>Importer mon fond</strong><small>JPG ou PNG depuis votre ordinateur</small></span>
+        </label>
+        <label class="background-choice">
+          <input type="radio" name="background_mode" value="generate" onchange="updateBackgroundMode()">
+          <span><strong>Générer avec OpenAI</strong><small>Inspiré de la Display, sans texte ni personnage</small></span>
+        </label>
+      </div>
+      <div class="background-panel" id="backgroundUploadPanel">
+        <div class="upload-grid full">
+          <div class="upload-zone" id="zone-bg">
+            <input type="file" accept="image/*" onchange="uploadToCloudinary(this,'bg_url','zone-bg','prev-bg')">
+            <span class="upload-icon">🌌</span>
+            <div class="spinner-small" style="display:none" id="spin-bg"></div>
+            <img class="preview-img" id="prev-bg" style="width:120px;height:50px;object-fit:cover;">
+            <span class="upload-label" data-i18n="background">Fond / Background</span>
+            <span class="upload-sub" data-i18n="backgroundSub">JPG ou PNG — image clé de la série</span>
+          </div>
         </div>
+      </div>
+      <div class="background-panel" id="backgroundGeneratePanel" hidden>
+        <div class="field background-prompt">
+          <label>Instruction envoyée à OpenAI</label>
+          <input type="text" id="background_prompt" value="Peux-tu me générer un visuel horizontal inspiré de mon produit, sans texte et sans personnage ?">
+        </div>
+        <div class="mini-status">La Display sera utilisée comme référence. La génération ne se lance qu’au clic sur le bouton HD.</div>
       </div>
     </div>
 
@@ -887,6 +915,7 @@ const assetPreviewMap = {
 };
 
 function getParams() {
+  const backgroundMode = document.querySelector('input[name="background_mode"]:checked')?.value || 'upload';
   const dispoFr = document.getElementById('dispo_reste').value;
   const dispoEn = document.getElementById('dispo_reste_en').value;
   const animEnabled = document.getElementById('animation-enabled')?.checked ? '1' : '0';
@@ -898,6 +927,9 @@ function getParams() {
     card1_url: urls.card1_url||'',
     card2_url: urls.card2_url||'',
     bg_url: urls.bg_url||'',
+    background_mode: backgroundMode,
+    background_prompt: document.getElementById('background_prompt').value,
+    background_reference_url: urls.display_url || urls.booster_url || '',
     logo_url: urls.logo_url||'',
     title_mode: document.getElementById('title_mode').value,
     title_image_url: urls.title_image_url||'',
@@ -1428,7 +1460,10 @@ async function uploadToCloudinary(input, key, zoneId, prevId, prevLargeId) {
 document.getElementById('bannerForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const btn=document.getElementById('submitBtn'),errorMsg=document.getElementById('errorMsg'),result=document.getElementById('result');
-  const missing=['booster_url','display_url','card1_url','card2_url','bg_url','logo_url'].filter(k=>!urls[k]);
+  const backgroundMode=document.querySelector('input[name="background_mode"]:checked')?.value||'upload';
+  const required=['booster_url','display_url','card1_url','card2_url','logo_url'];
+  if(backgroundMode==='upload') required.push('bg_url');
+  const missing=required.filter(k=>!urls[k]);
   if(missing.length){errorMsg.textContent='Images manquantes : '+missing.map(k=>k.replace('_url','')).join(', ');errorMsg.classList.add('show');return;}
   errorMsg.classList.remove('show');
   const webhookUrl=document.getElementById('webhook_url').value.trim();
@@ -1474,6 +1509,15 @@ document.getElementById('bannerForm').addEventListener('submit', async function(
   } catch(err){errorMsg.textContent='Erreur : '+err.message;errorMsg.classList.add('show');document.getElementById('statusMsg').textContent='';}
   finally{btn.classList.remove('loading');btn.disabled=false;}
 });
+
+function updateBackgroundMode() {
+  const mode=document.querySelector('input[name="background_mode"]:checked')?.value||'upload';
+  document.getElementById('backgroundUploadPanel').hidden=mode!=='upload';
+  document.getElementById('backgroundGeneratePanel').hidden=mode!=='generate';
+  sendToIframe();
+}
+
+updateBackgroundMode();
 
 async function generateHD() {
   const btn=document.getElementById('btnHD');
