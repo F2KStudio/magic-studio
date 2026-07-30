@@ -516,6 +516,12 @@ const TEMPLATE_VERSION = '20260724-palettes-projects-v1';
 const PALETTE_STORAGE_KEY = 'banner_color_palettes_v1';
 const PROJECT_STORAGE_KEY = 'banner_saved_projects_v1';
 const urls = {};
+const savedGeneratedBackground = localStorage.getItem('tcg_generated_background_url');
+if (savedGeneratedBackground) {
+  urls.bg_url = savedGeneratedBackground;
+  const savedBackgroundPreview = document.getElementById('prev-bg');
+  if (savedBackgroundPreview) savedBackgroundPreview.src = savedGeneratedBackground;
+}
 let currentTab = 'desktop_fr';
 let iframeReady = false;
 let hdPollTimer = null;
@@ -1504,6 +1510,7 @@ async function generateBackgroundIfNeeded(force=false) {
   const generatedUrl=data.secure_url||data.url;
   if(!generatedUrl) throw new Error('Cloudinary n’a pas renvoyé le fond généré.');
   urls.bg_url=generatedUrl;
+  localStorage.setItem('tcg_generated_background_url',generatedUrl);
   usage.count+=1;
   localStorage.setItem('tcg_background_usage',JSON.stringify(usage));
   const preview=document.getElementById('prev-bg');
