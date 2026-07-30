@@ -507,6 +507,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;hei
 <script>
 const CLOUD_NAME = "dyvmftiyu";
 const UPLOAD_PRESET = "banner_generator";
+const BACKGROUND_WEBHOOK_URL = "https://hook.eu1.make.com/tc2y57ua2zq3bg62pq6oc8qtr1zha1oh";
 const BASE_URL = new URL('.', window.location.href).href.replace(/\/$/, '');
 const TEMPLATE_VERSION = '20260724-palettes-projects-v1';
 const PALETTE_STORAGE_KEY = 'banner_color_palettes_v1';
@@ -1457,6 +1458,34 @@ async function uploadToCloudinary(input, key, zoneId, prevId, prevLargeId) {
   } catch(err){zone.classList.remove('uploading');zone.classList.add('error');if(spin)spin.style.display='none';label.textContent='Erreur';}
 }
 
+async function generateBackgroundIfNeeded() {
+  const mode=document.querySelector('input[name="background_mode"]:checked')?.value||'upload';
+  if(mode!=='generate') return;
+  const referenceUrl=urls.display_url||urls.booster_url||'';
+  if(!referenceUrl) throw new Error('Ajoute une Display ou un Booster : il sert de référence au fond.');
+  document.getElementById('statusMsg').textContent='Création du fond avec OpenAI… environ une minute.';
+  const response=await fetch(BACKGROUND_WEBHOOK_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      template_type:'tcg-background',
+      request_type:'generate_background',
+      background_mode:'generate',
+      background_prompt:document.getElementById('background_prompt').value,
+      background_reference_url:referenceUrl
+    })
+  });
+  const text=await response.text();
+  if(!response.ok) throw new Error('Fond IA : HTTP '+response.status);
+  let data;try{data=JSON.parse(text);}catch(_){data={secure_url:text};}
+  const generatedUrl=data.secure_url||data.url;
+  if(!generatedUrl) throw new Error('Cloudinary n’a pas renvoyé le fond généré.');
+  urls.bg_url=generatedUrl;
+  const preview=document.getElementById('prev-bg');
+  if(preview) preview.src=generatedUrl;
+  sendToIframe();
+}
+
 document.getElementById('bannerForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const btn=document.getElementById('submitBtn'),errorMsg=document.getElementById('errorMsg'),result=document.getElementById('result');
@@ -1482,8 +1511,14 @@ document.getElementById('bannerForm').addEventListener('submit', async function(
 
   setStep(1,'Envoi des données... (environ 30 sec)',10);
   try {
+    if(backgroundMode==='generate'){
+      setStep(1,'Création du fond avec OpenAI…',10);
+      await generateBackgroundIfNeeded();
+    }
     setStep(2,'Détourage des images en cours...',25);
-    const response=await fetch(webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...getParams(),overrides})});
+    const finalParams=getParams();
+    if(finalParams.background_mode==='generate') finalParams.background_mode='upload';
+    const response=await fetch(webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...finalParams,overrides})});
     setStep(3,'Génération des bannières HD...',60);
     const text=await response.text();
     setStep(4,'Finalisation...',90);
