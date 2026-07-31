@@ -15,8 +15,8 @@
 html{width:1080px;height:1920px;overflow:hidden;}
 body{width:1080px;height:1920px;overflow:hidden;background:transparent;position:relative;}
 .banner-bg{position:absolute;left:42px;top:42px;width:996px;height:1836px;border-radius:42px;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,0.65);z-index:0;}
-.bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.78) saturate(2.1) contrast(1.12);}
-.bg-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,0,20,0.08) 0%,rgba(4,0,20,0.12) 45%,rgba(4,0,20,0.50) 100%),radial-gradient(ellipse 120% 80% at 50% 42%,rgba(255,255,255,0.08) 0%,rgba(6,0,18,0.22) 70%,rgba(6,0,18,0.58) 100%);}
+.bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:none;}
+.bg-overlay{display:none;}
 .layer{position:absolute;left:42px;top:42px;width:996px;height:1836px;z-index:10;overflow:visible;}
 .logo-wrap{position:absolute;left:92px;top:70px;width:812px;text-align:center;z-index:28;transform:rotate(-4deg);transform-origin:center top;}
 .logo-mega{height:230px;width:auto;max-width:812px;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.9));}
@@ -66,7 +66,7 @@ body{width:1080px;height:1920px;overflow:hidden;background:transparent;position:
   100%{opacity:1;transform:translateX(0) perspective(300px) rotateY(-16deg) scaleX(.9)}
 }
 @keyframes bannerFloat{0%,100%{translate:0 0;}50%{translate:var(--motion-x,0) var(--motion-y,-6px);}}
-@keyframes bannerBgDrift{0%{transform:scale(1);filter:brightness(0.78) saturate(2.1) contrast(1.12);}100%{transform:scale(1.04);filter:brightness(0.83) saturate(2.18) contrast(1.14);}}
+@keyframes bannerBgDrift{0%{transform:scale(1);}100%{transform:scale(1.04);}}
 @media (prefers-reduced-motion:reduce){.motion-enabled *{animation:none!important;}}
 </style>
 </head>

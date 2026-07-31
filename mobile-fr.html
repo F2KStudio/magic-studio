@@ -15,8 +15,8 @@
 html{width:700px;height:420px;overflow:hidden;}
 body{width:700px;height:420px;overflow:hidden;background:transparent;position:relative;}
 .banner-bg{position:absolute;left:14px;top:10px;width:672px;height:400px;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.6);z-index:0;}
-.bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.78) saturate(2.1) contrast(1.12);}
-.bg-overlay{position:absolute;inset:0;background:radial-gradient(ellipse 100% 100% at 30% 50%,rgba(6,0,18,0.04) 0%,rgba(6,0,18,0.28) 60%,rgba(6,0,18,0.58) 100%);}
+.bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:none;}
+.bg-overlay{display:none;}
 .layer{position:absolute;left:14px;top:10px;width:672px;height:400px;z-index:10;overflow:visible;}
 .logo-wrap{position:absolute;left:-2px;top:6px;z-index:26;transform:rotate(-6deg);transform-origin:left top;}
 .logo-mega{height:122px;width:auto;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.9));}
@@ -50,7 +50,7 @@ body{width:700px;height:420px;overflow:hidden;background:transparent;position:re
 .motion-enabled .b-back-r{--motion-x:calc(5px * var(--motion-mult,.45));--motion-y:calc(-7px * var(--motion-mult,.45));--motion-duration:5.8s;}
 .motion-enabled .disp{--motion-x:calc(0px * var(--motion-mult,.45));--motion-y:calc(-9px * var(--motion-mult,.45));--motion-duration:4.9s;}
 @keyframes bannerFloat{0%,100%{translate:0 0;}50%{translate:var(--motion-x,0) var(--motion-y,-6px);}}
-@keyframes bannerBgDrift{0%{transform:scale(1);filter:brightness(0.78) saturate(2.1) contrast(1.12);}100%{transform:scale(1.04);filter:brightness(0.83) saturate(2.18) contrast(1.14);}}
+@keyframes bannerBgDrift{0%{transform:scale(1);}100%{transform:scale(1.04);}}
 @media (prefers-reduced-motion:reduce){.motion-enabled *{animation:none!important;}}
 </style>
 </head>
