@@ -70,12 +70,14 @@ const g = key => p.get(key) || '';
 const count = Math.max(1, Math.min(5, Number(g('figure_count') || 3)));
 const figureBox = document.querySelector('.figures');
 figureBox.classList.add('count-' + count);
-const videoDuration = count === 1 ? 4.2 : Math.max(7, count * 1.55);
+const speed = Math.max(50, Math.min(160, Number(g('video_speed') || 100))) / 100;
+const videoDuration = (count === 1 ? 4.2 : Math.max(7, count * 1.55)) / speed;
 document.documentElement.style.setProperty('--video-duration', videoDuration + 's');
 const bgUrl = g('bg_url');
 if (bgUrl) document.querySelector('.bg').style.backgroundImage = "url('" + bgUrl + "')";
 else document.querySelector('.bg').style.backgroundImage = 'linear-gradient(135deg,' + (g('fallback_bg') || '#06233a') + ',' + (g('fallback_bg2') || '#2f80c9') + ')';
 document.getElementById('videoText').textContent = g('series_text') || 'Série maintenant disponible !';
+document.getElementById('videoText').style.fontSize = (82 * Math.max(50, Math.min(180, Number(g('video_text_size') || 100))) / 100) + 'px';
 document.documentElement.style.setProperty('--product-glow', g('product_glow') || '#ffffff');
 document.querySelectorAll('img[data-src]').forEach(img => {
   const key = img.getAttribute('data-src');

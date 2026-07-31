@@ -180,6 +180,14 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
         <label>Texte vidéo</label>
         <input type="text" id="series_text" value="Série maintenant disponible !" oninput="sendToIframe()" placeholder="Série maintenant disponible !">
       </div>
+      <div class="field">
+        <label>Vitesse vidéo <span class="val" id="val-video-speed">100%</span></label>
+        <input type="range" id="video-speed" min="50" max="160" value="100" oninput="onElementSlider(this)">
+      </div>
+      <div class="field">
+        <label>Taille du texte vidéo <span class="val" id="val-video-text-size">100%</span></label>
+        <input type="range" id="video-text-size" min="50" max="180" value="100" oninput="onElementSlider(this)">
+      </div>
     </div>
     <div class="upload-grid five">
       <div class="upload-zone fig-zone" id="zone-fig1">
@@ -303,8 +311,9 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
   </div>
 
   <div class="card control-dock" id="controlDock">
-    <div class="card-title"><span class="num">⚙</span> Réglages produits live</div>
+    <div class="card-title"><span class="num">⚙</span> Réglages des éléments</div>
     <div id="productControlsMount"></div>
+    <button type="button" class="btn" style="margin-top:18px" onclick="resetElementControls()">↻ RÉINITIALISER TOUTES LES JAUGES</button>
   </div>
 
   <div class="links" id="linksBox"></div>
@@ -348,6 +357,8 @@ function getParams() {
     figure5_url:urls.figure5_url || '',
     product_glow:document.getElementById('product_glow_enabled').checked ? document.getElementById('product_glow').value : 'transparent',
     series_text:document.getElementById('series_text').value,
+    video_speed:document.getElementById('video-speed').value,
+    video_text_size:document.getElementById('video-text-size').value,
     ...getLeftControls(),
     ...getProductControls()
   };
@@ -429,7 +440,7 @@ function onProductSlider(el) {
 }
 
 function onElementSlider(el) {
-  const unit = el.id.endsWith('-size') ? '%' : (el.id.endsWith('-rot') ? '°' : 'px');
+  const unit = (el.id.endsWith('-size') || el.id === 'video-speed') ? '%' : (el.id.endsWith('-rot') ? '°' : 'px');
   const val = document.getElementById('val-' + el.id);
   if (val) val.textContent = el.value + unit;
   sendToIframe();
@@ -451,9 +462,28 @@ function showPreview() {
 function setupControlsDock() {
   const mount = document.getElementById('productControlsMount');
   const controls = document.querySelector('.product-controls:not(.logo-controls)');
+  const logoControls = document.querySelector('.logo-controls');
   const hint = document.querySelector('.hint');
   if (mount && controls && !mount.contains(controls)) mount.appendChild(controls);
+  if (mount && logoControls && !mount.contains(logoControls)) mount.appendChild(logoControls);
   if (mount && hint && !mount.contains(hint)) mount.appendChild(hint);
+}
+
+function resetElementControls() {
+  document.querySelectorAll('#productControlsMount input[type="range"]').forEach(el => {
+    const match = el.id.match(/^product(\d+)-z$/);
+    if (match) el.value = String(20 + Number(match[1]));
+    else if (el.id.endsWith('-size')) el.value = el.id.startsWith('product') ? '118' : '100';
+    else el.value = '0';
+    const unit = el.id.endsWith('-size') ? '%' : (el.id.endsWith('-rot') ? '°' : (el.id.endsWith('-z') ? '' : 'px'));
+    const val = document.getElementById('val-' + el.id);
+    if (val) val.textContent = el.value + unit;
+  });
+  document.getElementById('video-speed').value = '100';
+  document.getElementById('val-video-speed').textContent = '100%';
+  document.getElementById('video-text-size').value = '100';
+  document.getElementById('val-video-text-size').textContent = '100%';
+  sendToIframe();
 }
 
 function switchGoodsTab(kind, tabEl) {
