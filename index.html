@@ -1562,6 +1562,38 @@ function detectImageMime(bytes) {
   return '';
 }
 
+function extractBase64Image(value, depth=0) {
+  if (depth > 6 || value == null) return null;
+  if (typeof value === 'string') {
+    let clean=value.trim().replace(/^["']|["']$/g,'');
+    const dataUrl=clean.match(/^data:(image\/(?:png|jpeg|webp));base64,(.+)$/s);
+    let hintedMime=dataUrl ? dataUrl[1] : '';
+    if(dataUrl) clean=dataUrl[2];
+    clean=clean.replace(/\s+/g,'');
+    if(clean.length < 500 || !/^[A-Za-z0-9+/]+={0,2}$/.test(clean)) return null;
+    try {
+      const binary=atob(clean);
+      const bytes=Uint8Array.from(binary,ch=>ch.charCodeAt(0));
+      const mime=hintedMime||detectImageMime(bytes);
+      return mime ? {bytes,mime} : null;
+    } catch(_) {
+      return null;
+    }
+  }
+  if(Array.isArray(value)) {
+    for(const item of value) {
+      const found=extractBase64Image(item,depth+1);
+      if(found) return found;
+    }
+  } else if(typeof value === 'object') {
+    for(const nested of Object.values(value)) {
+      const found=extractBase64Image(nested,depth+1);
+      if(found) return found;
+    }
+  }
+  return null;
+}
+
 async function uploadGeneratedBackground(buffer, mimeType) {
   const extension = mimeType === 'image/jpeg' ? 'jpg' : mimeType.split('/')[1];
   const formData = new FormData();
@@ -1610,6 +1642,13 @@ async function generateBackgroundIfNeeded(force=false) {
     const text=new TextDecoder().decode(bytes);
     let data;try{data=JSON.parse(text);}catch(_){data=text;}
     generatedUrl=extractBackgroundImageUrl(data);
+    if(!generatedUrl) {
+      const encodedImage=extractBase64Image(data);
+      if(encodedImage) {
+        updateBackgroundGenerationStatus('Image Base64 reçue de Make, enregistrement sur Cloudinary…');
+        generatedUrl=await uploadGeneratedBackground(encodedImage.bytes.buffer,encodedImage.mime);
+      }
+    }
   }
   if(!generatedUrl) throw new Error('Make n’a renvoyé ni image ni URL exploitable.');
   await verifyBackgroundImage(generatedUrl);
