@@ -62,6 +62,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 .preview-card.show{display:block;position:sticky;top:10px;z-index:100;box-shadow:0 18px 42px rgba(0,0,0,.58)}
 #controlDock{display:none}
 .control-dock{margin-top:16px}
+.reset-format-btn{width:auto;padding:10px 15px;border:1px solid var(--border);border-radius:9px;background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-top:18px}
+.reset-format-btn:hover{border-color:var(--accent2);color:var(--accent2)}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .tab{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:8px 13px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer}
 .tab.active{background:rgba(124,58,237,.2);border-color:var(--accent);color:var(--accent2)}
@@ -303,7 +305,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
   </div>
 
   <div class="card control-dock" id="controlDock">
-    <div class="card-title"><span class="num">⚙</span> Réglages des éléments</div>
+    <div class="card-title"><span class="num">⚙</span> Réglages <span id="controlsFormatLabel">Goods Web</span></div>
     <div id="productControlsMount"></div>
     <div class="product-control" style="margin-top:18px">
       <div class="product-control-title">Réglages Vidéo 5s</div>
@@ -316,9 +318,13 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
           <div class="slider-label"><span>Taille du texte</span><span class="val" id="val-video-text-size">100%</span></div>
           <input type="range" id="video-text-size" min="50" max="180" value="100" oninput="onElementSlider(this)">
         </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Monter / Descendre le texte</span><span class="val" id="val-video-text-y">0px</span></div>
+          <input type="range" id="video-text-y" min="-300" max="300" value="0" oninput="onElementSlider(this)">
+        </div>
       </div>
     </div>
-    <button type="button" class="btn" style="margin-top:18px" onclick="resetElementControls()">↻ RÉINITIALISER TOUTES LES JAUGES</button>
+    <button type="button" class="reset-format-btn" onclick="resetElementControls()">↻ Réinitialiser ce format</button>
   </div>
 
   <div class="links" id="linksBox"></div>
@@ -337,8 +343,30 @@ const goodsConfig = {
   social:{w:1080,h:1920,scale:.32,tpl:'goods-social.html',label:'Goods Story / Insta'},
   video:{w:1080,h:1920,scale:.32,tpl:'goods-video.html',label:'Goods Vidéo 5s'}
 };
+const defaultFormatControls = {};
+for (let i = 1; i <= 3; i++) {
+  defaultFormatControls['left' + i + '_size'] = '100';
+  defaultFormatControls['left' + i + '_x'] = '0';
+  defaultFormatControls['left' + i + '_y'] = '0';
+  defaultFormatControls['left' + i + '_rot'] = '0';
+}
+for (let i = 1; i <= 5; i++) {
+  defaultFormatControls['product' + i + '_size'] = '118';
+  defaultFormatControls['product' + i + '_x'] = '0';
+  defaultFormatControls['product' + i + '_y'] = '0';
+  defaultFormatControls['product' + i + '_rot'] = '0';
+  defaultFormatControls['product' + i + '_z'] = String(20 + i);
+}
+defaultFormatControls.video_speed = '100';
+defaultFormatControls.video_text_size = '100';
+defaultFormatControls.video_text_y = '0';
+const formatControls = {};
+Object.keys(goodsConfig).forEach(kind => {
+  formatControls[kind] = {...defaultFormatControls};
+});
 
-function getParams() {
+function getParams(kind = currentGoodsTab) {
+  if (kind === currentGoodsTab) saveControlsForFormat(kind);
   const backgroundMode = document.querySelector('input[name="background_mode"]:checked')?.value || 'gradient';
   return {
     template_type:'goods',
@@ -362,38 +390,46 @@ function getParams() {
     figure5_url:urls.figure5_url || '',
     product_glow:document.getElementById('product_glow_enabled').checked ? document.getElementById('product_glow').value : 'transparent',
     series_text:document.getElementById('series_text').value,
-    video_speed:document.getElementById('video-speed').value,
-    video_text_size:document.getElementById('video-text-size').value,
-    ...getLeftControls(),
-    ...getProductControls()
+    ...formatControls[kind]
   };
 }
 
-function getLeftControls() {
-  const controls = {};
+function saveControlsForFormat(kind = currentGoodsTab) {
+  const controls = formatControls[kind];
   for (let i = 1; i <= 3; i++) {
     ['size', 'x', 'y', 'rot'].forEach(prop => {
       const el = document.getElementById('left' + i + '-' + prop);
-      controls['left' + i + '_' + prop] = el ? el.value : (prop === 'size' ? '100' : '0');
+      if (el) controls['left' + i + '_' + prop] = el.value;
     });
   }
-  return controls;
-}
-
-function getProductControls() {
-  const controls = {};
   for (let i = 1; i <= 5; i++) {
     ['size', 'x', 'y', 'rot', 'z'].forEach(prop => {
       const el = document.getElementById('product' + i + '-' + prop);
-      controls['product' + i + '_' + prop] = el ? el.value : (prop === 'size' ? '118' : prop === 'z' ? String(20 + i) : '0');
+      if (el) controls['product' + i + '_' + prop] = el.value;
     });
   }
-  return controls;
+  controls.video_speed = document.getElementById('video-speed').value;
+  controls.video_text_size = document.getElementById('video-text-size').value;
+  controls.video_text_y = document.getElementById('video-text-y').value;
+}
+
+function loadControlsForFormat(kind) {
+  const controls = formatControls[kind];
+  Object.entries(controls).forEach(([key, value]) => {
+    const id = key.replace(/_/g, '-');
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = value;
+    const unit = (id.endsWith('-size') || id === 'video-speed') ? '%' : (id.endsWith('-rot') ? '°' : (id.endsWith('-z') ? '' : 'px'));
+    const val = document.getElementById('val-' + id);
+    if (val) val.textContent = value + unit;
+  });
+  document.getElementById('controlsFormatLabel').textContent = goodsConfig[kind].label;
 }
 
 function buildUrl(kind) {
   const cfg = goodsConfig[kind];
-  return BASE_URL + '/' + cfg.tpl + '?' + new URLSearchParams(getParams()).toString();
+  return BASE_URL + '/' + cfg.tpl + '?' + new URLSearchParams(getParams(kind)).toString();
 }
 
 async function uploadToCloudinary(input, key, zoneId, prevId) {
@@ -441,6 +477,7 @@ function onProductSlider(el) {
   const unit = el.id.endsWith('-size') ? '%' : (el.id.endsWith('-z') ? '' : 'px');
   const val = document.getElementById('val-' + el.id);
   if (val) val.textContent = el.value + unit;
+  saveControlsForFormat();
   sendToIframe();
 }
 
@@ -448,6 +485,7 @@ function onElementSlider(el) {
   const unit = (el.id.endsWith('-size') || el.id === 'video-speed') ? '%' : (el.id.endsWith('-rot') ? '°' : 'px');
   const val = document.getElementById('val-' + el.id);
   if (val) val.textContent = el.value + unit;
+  saveControlsForFormat();
   sendToIframe();
 }
 
@@ -475,24 +513,15 @@ function setupControlsDock() {
 }
 
 function resetElementControls() {
-  document.querySelectorAll('#productControlsMount input[type="range"]').forEach(el => {
-    const match = el.id.match(/^product(\d+)-z$/);
-    if (match) el.value = String(20 + Number(match[1]));
-    else if (el.id.endsWith('-size')) el.value = el.id.startsWith('product') ? '118' : '100';
-    else el.value = '0';
-    const unit = el.id.endsWith('-size') ? '%' : (el.id.endsWith('-rot') ? '°' : (el.id.endsWith('-z') ? '' : 'px'));
-    const val = document.getElementById('val-' + el.id);
-    if (val) val.textContent = el.value + unit;
-  });
-  document.getElementById('video-speed').value = '100';
-  document.getElementById('val-video-speed').textContent = '100%';
-  document.getElementById('video-text-size').value = '100';
-  document.getElementById('val-video-text-size').textContent = '100%';
+  formatControls[currentGoodsTab] = {...defaultFormatControls};
+  loadControlsForFormat(currentGoodsTab);
   sendToIframe();
 }
 
 function switchGoodsTab(kind, tabEl) {
+  saveControlsForFormat(currentGoodsTab);
   currentGoodsTab = kind;
+  loadControlsForFormat(kind);
   document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
   if (tabEl) tabEl.classList.add('active');
   const cfg = goodsConfig[kind];
@@ -543,9 +572,14 @@ async function generateGoodsHD() {
   button.textContent = '⏳ PRÉPARATION...';
 
   try {
-    const payload = getParams();
+    const payload = getParams(currentGoodsTab);
     payload.job_id = 'goods_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     payload.request_type = 'hd';
+    payload.format_controls = JSON.stringify(formatControls);
+    payload.desktop_url = buildUrl('desktop');
+    payload.mobile_url = buildUrl('mobile');
+    payload.social_url = buildUrl('social');
+    payload.video_url = buildUrl('video');
     if (payload.background_mode === 'gradient') payload.bg_url = '';
 
     // Le scénario Make est linéaire : les emplacements non utilisés réemploient
@@ -581,6 +615,7 @@ function updateBackgroundMode() {
 updateFigureVisibility();
 updateBackgroundMode();
 setupControlsDock();
+loadControlsForFormat(currentGoodsTab);
 </script>
 </body>
 </html>

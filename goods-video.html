@@ -78,6 +78,7 @@ if (bgUrl) document.querySelector('.bg').style.backgroundImage = "url('" + bgUrl
 else document.querySelector('.bg').style.backgroundImage = 'linear-gradient(135deg,' + (g('fallback_bg') || '#06233a') + ',' + (g('fallback_bg2') || '#2f80c9') + ')';
 document.getElementById('videoText').textContent = g('series_text') || 'Série maintenant disponible !';
 document.getElementById('videoText').style.fontSize = (82 * Math.max(50, Math.min(180, Number(g('video_text_size') || 100))) / 100) + 'px';
+document.getElementById('videoText').style.bottom = (300 - Number(g('video_text_y') || 0)) + 'px';
 document.documentElement.style.setProperty('--product-glow', g('product_glow') || '#ffffff');
 document.querySelectorAll('img[data-src]').forEach(img => {
   const key = img.getAttribute('data-src');
