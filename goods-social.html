@@ -10,10 +10,10 @@ body{position:relative;font-family:Arial,sans-serif}
 .bg{position:absolute;inset:0;background:radial-gradient(ellipse at 52% 36%,rgba(24,154,205,.68),rgba(4,18,34,.78) 52%,#03070d 100%);background-size:cover;background-position:center;filter:saturate(1.22) contrast(1.06)}
 .smoke{position:absolute;inset:-20%;background:radial-gradient(circle at 50% 28%,rgba(0,190,255,.3),transparent 30%),radial-gradient(circle at 64% 48%,rgba(41,210,255,.22),transparent 28%),radial-gradient(circle at 34% 60%,rgba(0,110,180,.22),transparent 32%);filter:blur(22px)}
 .left-stack{position:absolute;left:44px;top:54px;width:990px;height:600px;z-index:40}
-.left-img{position:absolute;object-fit:contain;filter:drop-shadow(0 10px 16px rgba(0,0,0,.8))}
-.left1{left:20px!important;top:18px!important;width:330px;height:250px;transform:perspective(420px) rotateY(-16deg) rotateZ(-6deg);transform-origin:center center}
-.left2{left:310px!important;top:12px!important;width:470px;height:250px}
-.left3{left:770px!important;top:42px!important;width:260px;height:180px}
+.left-img{position:absolute;object-fit:contain;filter:drop-shadow(0 10px 16px rgba(0,0,0,.8));transform-origin:center center}
+.left1{left:20px;top:18px;width:330px;height:250px;transform:perspective(420px) rotateY(-16deg) rotateZ(-6deg)}
+.left2{left:310px;top:12px;width:470px;height:250px}
+.left3{left:770px;top:42px;width:260px;height:180px}
 .figures{position:absolute;left:35px;top:480px;width:970px;height:1220px;z-index:30}
 .fig{position:absolute;object-fit:contain;filter:drop-shadow(0 0 10px var(--product-glow,#fff));transform-origin:center bottom}
 .count-1 .fig1{left:170px;top:40px;width:660px;height:1120px}
@@ -48,7 +48,7 @@ const count = Math.max(1, Math.min(5, Number(g('figure_count') || 3)));
 document.querySelector('.figures').classList.add('count-' + count);
 const bgUrl = g('bg_url');
 if (bgUrl) document.querySelector('.bg').style.backgroundImage = "url('" + bgUrl + "')";
-else document.querySelector('.bg').style.backgroundColor = g('fallback_bg') || '#06233a';
+else document.querySelector('.bg').style.backgroundImage = 'linear-gradient(135deg,' + (g('fallback_bg') || '#06233a') + ',' + (g('fallback_bg2') || '#2f80c9') + ')';
 document.querySelectorAll('img[data-src]').forEach(img => {
   const key = img.getAttribute('data-src');
   const url = g(key);
@@ -63,6 +63,19 @@ document.querySelectorAll('img[data-src]').forEach(img => {
   img.src = url;
 });
 document.documentElement.style.setProperty('--product-glow', g('product_glow') || '#ffffff');
+function applyLeftControls() {
+  for (let i = 1; i <= 3; i++) {
+    const img = document.querySelector('.left' + i);
+    if (!img || img.classList.contains('missing')) continue;
+    const size = Number(g('left' + i + '_size') || 100) / 100;
+    const x = Number(g('left' + i + '_x') || 0);
+    const y = Number(g('left' + i + '_y') || 0);
+    const rot = Number(g('left' + i + '_rot') || 0);
+    img.style.transform = i === 1
+      ? 'translate(' + x + 'px,' + y + 'px) scale(' + size + ') perspective(420px) rotateY(-16deg) rotateZ(' + (-6 + rot) + 'deg)'
+      : 'translate(' + x + 'px,' + y + 'px) scale(' + size + ') rotate(' + rot + 'deg)';
+  }
+}
 function applyProductControls() {
   for (let i = 1; i <= 5; i++) {
     const img = document.querySelector('.fig' + i);
@@ -70,11 +83,13 @@ function applyProductControls() {
     const size = Number(g('product' + i + '_size') || 118) / 100;
     const x = Number(g('product' + i + '_x') || 0);
     const y = Number(g('product' + i + '_y') || 0);
+    const rot = Number(g('product' + i + '_rot') || 0);
     const z = Number(g('product' + i + '_z') || (20 + i));
-    img.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + size + ')';
+    img.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + size + ') rotate(' + rot + 'deg)';
     img.style.zIndex = z;
   }
 }
+applyLeftControls();
 applyProductControls();
 </script>
 </body>

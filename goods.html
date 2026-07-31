@@ -127,6 +127,29 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
       <label class="toggle-pill"><input type="checkbox" id="show_left2" checked onchange="sendToIframe()"> Afficher logo 2</label>
       <label class="toggle-pill"><input type="checkbox" id="show_left3" checked onchange="sendToIframe()"> Afficher logo 3</label>
     </div>
+    <div class="product-controls logo-controls">
+      <div class="product-control">
+        <div class="product-control-title">Logo 1</div>
+        <div class="slider-row"><div class="slider-label"><span>Taille</span><span class="val" id="val-left1-size">100%</span></div><input type="range" id="left1-size" min="40" max="220" value="100" oninput="onElementSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Gauche / Droite</span><span class="val" id="val-left1-x">0px</span></div><input type="range" id="left1-x" min="-300" max="300" value="0" oninput="onElementSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Haut / Bas</span><span class="val" id="val-left1-y">0px</span></div><input type="range" id="left1-y" min="-220" max="220" value="0" oninput="onElementSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Rotation</span><span class="val" id="val-left1-rot">0°</span></div><input type="range" id="left1-rot" min="-180" max="180" value="0" oninput="onElementSlider(this)"></div>
+      </div>
+      <div class="product-control">
+        <div class="product-control-title">Logo 2</div>
+        <div class="slider-row"><div class="slider-label"><span>Taille</span><span class="val" id="val-left2-size">100%</span></div><input type="range" id="left2-size" min="40" max="220" value="100" oninput="onElementSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Gauche / Droite</span><span class="val" id="val-left2-x">0px</span></div><input type="range" id="left2-x" min="-300" max="300" value="0" oninput="onElementSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Haut / Bas</span><span class="val" id="val-left2-y">0px</span></div><input type="range" id="left2-y" min="-220" max="220" value="0" oninput="onElementSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Rotation</span><span class="val" id="val-left2-rot">0°</span></div><input type="range" id="left2-rot" min="-180" max="180" value="0" oninput="onElementSlider(this)"></div>
+      </div>
+      <div class="product-control">
+        <div class="product-control-title">Logo 3</div>
+        <div class="slider-row"><div class="slider-label"><span>Taille</span><span class="val" id="val-left3-size">100%</span></div><input type="range" id="left3-size" min="40" max="220" value="100" oninput="onElementSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Gauche / Droite</span><span class="val" id="val-left3-x">0px</span></div><input type="range" id="left3-x" min="-300" max="300" value="0" oninput="onElementSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Haut / Bas</span><span class="val" id="val-left3-y">0px</span></div><input type="range" id="left3-y" min="-220" max="220" value="0" oninput="onElementSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Rotation</span><span class="val" id="val-left3-rot">0°</span></div><input type="range" id="left3-rot" min="-180" max="180" value="0" oninput="onElementSlider(this)"></div>
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -191,6 +214,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
         <div class="slider-row"><div class="slider-label"><span>Taille</span><span class="val" id="val-product1-size">118%</span></div><input type="range" id="product1-size" min="60" max="180" value="118" oninput="onProductSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Gauche / Droite</span><span class="val" id="val-product1-x">0px</span></div><input type="range" id="product1-x" min="-260" max="260" value="0" oninput="onProductSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Haut / Bas</span><span class="val" id="val-product1-y">0px</span></div><input type="range" id="product1-y" min="-180" max="180" value="0" oninput="onProductSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Rotation</span><span class="val" id="val-product1-rot">0°</span></div><input type="range" id="product1-rot" min="-180" max="180" value="0" oninput="onElementSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Calque</span><span class="val" id="val-product1-z">21</span></div><input type="range" id="product1-z" min="1" max="50" value="21" oninput="onProductSlider(this)"></div>
       </div>
       <div class="product-control" data-product-control="2">
@@ -198,6 +222,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
         <div class="slider-row"><div class="slider-label"><span>Taille</span><span class="val" id="val-product2-size">118%</span></div><input type="range" id="product2-size" min="60" max="180" value="118" oninput="onProductSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Gauche / Droite</span><span class="val" id="val-product2-x">0px</span></div><input type="range" id="product2-x" min="-260" max="260" value="0" oninput="onProductSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Haut / Bas</span><span class="val" id="val-product2-y">0px</span></div><input type="range" id="product2-y" min="-180" max="180" value="0" oninput="onProductSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Rotation</span><span class="val" id="val-product2-rot">0°</span></div><input type="range" id="product2-rot" min="-180" max="180" value="0" oninput="onElementSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Calque</span><span class="val" id="val-product2-z">22</span></div><input type="range" id="product2-z" min="1" max="50" value="22" oninput="onProductSlider(this)"></div>
       </div>
       <div class="product-control" data-product-control="3">
@@ -205,6 +230,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
         <div class="slider-row"><div class="slider-label"><span>Taille</span><span class="val" id="val-product3-size">118%</span></div><input type="range" id="product3-size" min="60" max="180" value="118" oninput="onProductSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Gauche / Droite</span><span class="val" id="val-product3-x">0px</span></div><input type="range" id="product3-x" min="-260" max="260" value="0" oninput="onProductSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Haut / Bas</span><span class="val" id="val-product3-y">0px</span></div><input type="range" id="product3-y" min="-180" max="180" value="0" oninput="onProductSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Rotation</span><span class="val" id="val-product3-rot">0°</span></div><input type="range" id="product3-rot" min="-180" max="180" value="0" oninput="onElementSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Calque</span><span class="val" id="val-product3-z">23</span></div><input type="range" id="product3-z" min="1" max="50" value="23" oninput="onProductSlider(this)"></div>
       </div>
       <div class="product-control" data-product-control="4">
@@ -212,6 +238,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
         <div class="slider-row"><div class="slider-label"><span>Taille</span><span class="val" id="val-product4-size">118%</span></div><input type="range" id="product4-size" min="60" max="180" value="118" oninput="onProductSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Gauche / Droite</span><span class="val" id="val-product4-x">0px</span></div><input type="range" id="product4-x" min="-260" max="260" value="0" oninput="onProductSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Haut / Bas</span><span class="val" id="val-product4-y">0px</span></div><input type="range" id="product4-y" min="-180" max="180" value="0" oninput="onProductSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Rotation</span><span class="val" id="val-product4-rot">0°</span></div><input type="range" id="product4-rot" min="-180" max="180" value="0" oninput="onElementSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Calque</span><span class="val" id="val-product4-z">24</span></div><input type="range" id="product4-z" min="1" max="50" value="24" oninput="onProductSlider(this)"></div>
       </div>
       <div class="product-control" data-product-control="5">
@@ -219,6 +246,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
         <div class="slider-row"><div class="slider-label"><span>Taille</span><span class="val" id="val-product5-size">118%</span></div><input type="range" id="product5-size" min="60" max="180" value="118" oninput="onProductSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Gauche / Droite</span><span class="val" id="val-product5-x">0px</span></div><input type="range" id="product5-x" min="-260" max="260" value="0" oninput="onProductSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Haut / Bas</span><span class="val" id="val-product5-y">0px</span></div><input type="range" id="product5-y" min="-180" max="180" value="0" oninput="onProductSlider(this)"></div>
+        <div class="slider-row"><div class="slider-label"><span>Rotation</span><span class="val" id="val-product5-rot">0°</span></div><input type="range" id="product5-rot" min="-180" max="180" value="0" oninput="onElementSlider(this)"></div>
         <div class="slider-row"><div class="slider-label"><span>Calque</span><span class="val" id="val-product5-z">25</span></div><input type="range" id="product5-z" min="1" max="50" value="25" oninput="onProductSlider(this)"></div>
       </div>
     </div>
@@ -320,14 +348,26 @@ function getParams() {
     figure5_url:urls.figure5_url || '',
     product_glow:document.getElementById('product_glow_enabled').checked ? document.getElementById('product_glow').value : 'transparent',
     series_text:document.getElementById('series_text').value,
+    ...getLeftControls(),
     ...getProductControls()
   };
+}
+
+function getLeftControls() {
+  const controls = {};
+  for (let i = 1; i <= 3; i++) {
+    ['size', 'x', 'y', 'rot'].forEach(prop => {
+      const el = document.getElementById('left' + i + '-' + prop);
+      controls['left' + i + '_' + prop] = el ? el.value : (prop === 'size' ? '100' : '0');
+    });
+  }
+  return controls;
 }
 
 function getProductControls() {
   const controls = {};
   for (let i = 1; i <= 5; i++) {
-    ['size', 'x', 'y', 'z'].forEach(prop => {
+    ['size', 'x', 'y', 'rot', 'z'].forEach(prop => {
       const el = document.getElementById('product' + i + '-' + prop);
       controls['product' + i + '_' + prop] = el ? el.value : (prop === 'size' ? '118' : prop === 'z' ? String(20 + i) : '0');
     });
@@ -388,6 +428,13 @@ function onProductSlider(el) {
   sendToIframe();
 }
 
+function onElementSlider(el) {
+  const unit = el.id.endsWith('-size') ? '%' : (el.id.endsWith('-rot') ? '°' : 'px');
+  const val = document.getElementById('val-' + el.id);
+  if (val) val.textContent = el.value + unit;
+  sendToIframe();
+}
+
 function toggleProductGlow() {
   const enabled = document.getElementById('product_glow_enabled').checked;
   document.getElementById('product_glow').disabled = !enabled;
@@ -403,7 +450,7 @@ function showPreview() {
 
 function setupControlsDock() {
   const mount = document.getElementById('productControlsMount');
-  const controls = document.querySelector('.product-controls');
+  const controls = document.querySelector('.product-controls:not(.logo-controls)');
   const hint = document.querySelector('.hint');
   if (mount && controls && !mount.contains(controls)) mount.appendChild(controls);
   if (mount && hint && !mount.contains(hint)) mount.appendChild(hint);

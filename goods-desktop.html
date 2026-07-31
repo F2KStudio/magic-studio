@@ -30,11 +30,11 @@ body{position:relative;font-family:Arial,sans-serif}
   <div class="frame">
     <div class="bg"></div>
   <div class="smoke"></div>
+  </div>
   <div class="left-stack">
     <img class="left-img left1" data-src="left1_url">
     <img class="left-img left2" data-src="left2_url">
     <img class="left-img left3" data-src="left3_url">
-  </div>
   </div>
   <div class="figures">
     <img class="fig fig1" data-src="figure1_url">
@@ -66,6 +66,19 @@ document.querySelectorAll('img[data-src]').forEach(img => {
   img.src = url;
 });
 document.documentElement.style.setProperty('--product-glow', g('product_glow') || '#ffffff');
+function applyLeftControls() {
+  for (let i = 1; i <= 3; i++) {
+    const img = document.querySelector('.left' + i);
+    if (!img || img.classList.contains('missing')) continue;
+    const size = Number(g('left' + i + '_size') || 100) / 100;
+    const x = Number(g('left' + i + '_x') || 0);
+    const y = Number(g('left' + i + '_y') || 0);
+    const rot = Number(g('left' + i + '_rot') || 0);
+    img.style.transform = i === 1
+      ? 'translate(' + x + 'px,' + y + 'px) scale(' + size + ') perspective(360px) rotateY(-16deg) rotateZ(' + (-6 + rot) + 'deg)'
+      : 'translate(' + x + 'px,' + y + 'px) scale(' + size + ') rotate(' + rot + 'deg)';
+  }
+}
 function applyProductControls() {
   for (let i = 1; i <= 5; i++) {
     const img = document.querySelector('.fig' + i);
@@ -73,11 +86,13 @@ function applyProductControls() {
     const size = Number(g('product' + i + '_size') || 118) / 100;
     const x = Number(g('product' + i + '_x') || 0);
     const y = Number(g('product' + i + '_y') || 0);
+    const rot = Number(g('product' + i + '_rot') || 0);
     const z = Number(g('product' + i + '_z') || (20 + i));
-    img.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + size + ')';
+    img.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + size + ') rotate(' + rot + 'deg)';
     img.style.zIndex = z;
   }
 }
+applyLeftControls();
 applyProductControls();
 </script>
 </body>
