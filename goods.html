@@ -80,6 +80,11 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
 .hd-status.show{display:block}
 .hd-status.success{border-color:#22c55e;color:#bbf7d0}
 .hd-status.error{border-color:#ef4444;color:#fecaca}
+.hd-downloads{display:none;margin-top:12px;grid-template-columns:repeat(3,1fr);gap:10px}
+.hd-downloads.show{display:grid}
+.hd-download{display:flex;align-items:center;justify-content:center;padding:13px 10px;border:1px solid #22c55e;border-radius:10px;background:rgba(34,197,94,.12);color:#bbf7d0;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+.hd-download:hover{background:rgba(34,197,94,.22)}
+@media(max-width:620px){.hd-downloads{grid-template-columns:1fr}}
 .background-mode{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .background-choice{display:flex;align-items:flex-start;gap:10px;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;cursor:pointer}
 .background-choice:has(input:checked){border-color:var(--accent2);background:rgba(124,58,237,.15)}
@@ -293,6 +298,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
   <button class="btn" onclick="showLinks()">🔗 CRÉER LES LIENS GOODS</button>
   <button class="btn btn-hd" id="generateHdBtn" onclick="generateGoodsHD()">🚀 GÉNÉRER LES 3 FORMATS HD</button>
   <div class="hd-status" id="hdStatus" role="status" aria-live="polite"></div>
+  <div class="hd-downloads" id="hdDownloads"></div>
 
   <div class="preview-card" id="previewCard">
     <div class="tabs">
@@ -604,6 +610,52 @@ function setHdStatus(message, type) {
   box.className = 'hd-status show' + (type ? ' ' + type : '');
 }
 
+const GOODS_STATUS_WEBHOOK_URL = 'https://hook.eu1.make.com/461my7gj6h9uwh9ff2i9wyqvdfaksyz1';
+let goodsHdPollTimer = null;
+
+function renderGoodsHdResults(result) {
+  const items = [
+    ['Web', result.desktop_fr],
+    ['Mobile', result.mobile_fr],
+    ['Story / Insta', result.desktop_en]
+  ].filter(item => item[1]);
+  const box = document.getElementById('hdDownloads');
+  box.innerHTML = items.map(item =>
+    '<a class="hd-download" href="' + String(item[1]).replace(/"/g, '&quot;') +
+    '" target="_blank" rel="noopener" download>⬇ Télécharger ' + item[0] + '</a>'
+  ).join('');
+  box.classList.toggle('show', items.length > 0);
+}
+
+async function pollGoodsHdResult(jobId, startedAt) {
+  if (!GOODS_STATUS_WEBHOOK_URL) {
+    setHdStatus('Les PNG sont en cours de création dans Make, mais le webhook de suivi doit encore être relié.', 'error');
+    return;
+  }
+  if (Date.now() - startedAt > 180000) {
+    setHdStatus('La génération prend plus de temps que prévu. Réessayez dans un instant.', 'error');
+    return;
+  }
+  try {
+    const response = await fetch(GOODS_STATUS_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({job_id: jobId})
+    });
+    if (response.ok) {
+      const result = await response.json();
+      if (result.status === 'completed' && result.desktop_fr && result.mobile_fr && result.desktop_en) {
+        renderGoodsHdResults(result);
+        setHdStatus('✅ Les trois PNG sont prêts au téléchargement.', 'success');
+        document.getElementById('generateHdBtn').disabled = false;
+        document.getElementById('generateHdBtn').textContent = '🚀 GÉNÉRER LES 3 FORMATS HD';
+        return;
+      }
+    }
+  } catch (_) {}
+  goodsHdPollTimer = setTimeout(() => pollGoodsHdResult(jobId, startedAt), 3000);
+}
+
 async function generateGoodsHD() {
   const button = document.getElementById('generateHdBtn');
   if (!urls.figure1_url) {
@@ -613,6 +665,8 @@ async function generateGoodsHD() {
 
   button.disabled = true;
   button.textContent = '⏳ PRÉPARATION...';
+  document.getElementById('hdDownloads').classList.remove('show');
+  if (goodsHdPollTimer) clearTimeout(goodsHdPollTimer);
 
   try {
     const payload = getParams(currentGoodsTab);
@@ -639,10 +693,10 @@ async function generateGoodsHD() {
       body: JSON.stringify(payload)
     });
     if (!response.ok) throw new Error('HTTP ' + response.status);
-    setHdStatus('C’est parti ! Make génère les formats Web, Mobile et Story. Identifiant : ' + payload.job_id, 'success');
+    setHdStatus('C’est parti ! Make génère les formats Web, Mobile et Story…', 'success');
+    pollGoodsHdResult(payload.job_id, Date.now());
   } catch (error) {
     setHdStatus('Make n’a pas reçu la demande. Vérifiez que le scénario est activé, puis réessayez. (' + error.message + ')', 'error');
-  } finally {
     button.disabled = false;
     button.textContent = '🚀 GÉNÉRER LES 3 FORMATS HD';
   }
