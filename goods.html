@@ -337,6 +337,20 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
         </div>
       </div>
     </div>
+    <div class="product-control" style="margin-top:18px">
+      <div class="product-control-title">✨ Animation HTML</div>
+      <div class="field-row" style="grid-template-columns:160px 1fr 1fr;align-items:end">
+        <label class="toggle-row"><input type="checkbox" id="animation-enabled" checked onchange="onGoodsAnimationControl()"> Activer</label>
+        <div class="slider-row">
+          <div class="slider-label"><span>Intensité</span><span class="val" id="val-animation-intensity">45%</span></div>
+          <input type="range" id="animation-intensity" min="0" max="100" value="45" oninput="onGoodsAnimationControl()">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Vitesse</span><span class="val" id="val-animation-speed">60%</span></div>
+          <input type="range" id="animation-speed" min="10" max="100" value="60" oninput="onGoodsAnimationControl()">
+        </div>
+      </div>
+    </div>
     <button type="button" class="reset-format-btn" onclick="resetElementControls()">↻ Réinitialiser ce format</button>
   </div>
 
@@ -383,6 +397,7 @@ Object.keys(goodsConfig).forEach(kind => {
 function getParams(kind = currentGoodsTab) {
   if (kind === currentGoodsTab) saveControlsForFormat(kind);
   const backgroundMode = document.querySelector('input[name="background_mode"]:checked')?.value || 'gradient';
+  const animationEnabled = document.getElementById('animation-enabled').checked ? '1' : '0';
   return {
     template_type:'goods',
     background_mode:backgroundMode,
@@ -405,8 +420,17 @@ function getParams(kind = currentGoodsTab) {
     figure5_url:urls.figure5_url || '',
     product_glow:document.getElementById('product_glow_enabled').checked ? document.getElementById('product_glow').value : 'transparent',
     series_text:document.getElementById('series_text').value,
+    animation:animationEnabled,
+    animIntensity:document.getElementById('animation-intensity').value,
+    animSpeed:document.getElementById('animation-speed').value,
     ...formatControls[kind]
   };
+}
+
+function onGoodsAnimationControl() {
+  document.getElementById('val-animation-intensity').textContent = document.getElementById('animation-intensity').value + '%';
+  document.getElementById('val-animation-speed').textContent = document.getElementById('animation-speed').value + '%';
+  sendToIframe();
 }
 
 function saveControlsForFormat(kind = currentGoodsTab) {
