@@ -307,7 +307,20 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
   <div class="card control-dock" id="controlDock">
     <div class="card-title"><span class="num">⚙</span> Réglages <span id="controlsFormatLabel">Goods Web</span></div>
     <div id="productControlsMount"></div>
-    <div class="product-control" style="margin-top:18px">
+    <div class="product-control" id="storyTextControls" style="margin-top:18px;display:none">
+      <div class="product-control-title">Texte Story / Instagram</div>
+      <div class="field-row">
+        <div class="slider-row">
+          <div class="slider-label"><span>Taille du texte</span><span class="val" id="val-story-text-size">100%</span></div>
+          <input type="range" id="story-text-size" min="50" max="180" value="100" oninput="onElementSlider(this)">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Monter / Descendre le texte</span><span class="val" id="val-story-text-y">0px</span></div>
+          <input type="range" id="story-text-y" min="-500" max="500" value="0" oninput="onElementSlider(this)">
+        </div>
+      </div>
+    </div>
+    <div class="product-control" id="videoTextControls" style="margin-top:18px;display:none">
       <div class="product-control-title">Réglages Vidéo 5s</div>
       <div class="field-row">
         <div class="slider-row">
@@ -360,6 +373,8 @@ for (let i = 1; i <= 5; i++) {
 defaultFormatControls.video_speed = '100';
 defaultFormatControls.video_text_size = '100';
 defaultFormatControls.video_text_y = '0';
+defaultFormatControls.story_text_size = '100';
+defaultFormatControls.story_text_y = '0';
 const formatControls = {};
 Object.keys(goodsConfig).forEach(kind => {
   formatControls[kind] = {...defaultFormatControls};
@@ -411,6 +426,8 @@ function saveControlsForFormat(kind = currentGoodsTab) {
   controls.video_speed = document.getElementById('video-speed').value;
   controls.video_text_size = document.getElementById('video-text-size').value;
   controls.video_text_y = document.getElementById('video-text-y').value;
+  controls.story_text_size = document.getElementById('story-text-size').value;
+  controls.story_text_y = document.getElementById('story-text-y').value;
 }
 
 function loadControlsForFormat(kind) {
@@ -425,6 +442,8 @@ function loadControlsForFormat(kind) {
     if (val) val.textContent = value + unit;
   });
   document.getElementById('controlsFormatLabel').textContent = goodsConfig[kind].label;
+  document.getElementById('storyTextControls').style.display = kind === 'social' ? 'block' : 'none';
+  document.getElementById('videoTextControls').style.display = kind === 'video' ? 'block' : 'none';
 }
 
 function buildUrl(kind) {
