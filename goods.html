@@ -59,7 +59,7 @@ input[type=range]{width:100%;height:3px;-webkit-appearance:none;background:var(-
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent2);border:2px solid var(--bg)}
 .hint{font-size:12px;color:#fbbf24;margin-top:10px}
 .preview-card{display:none;background:var(--surface);border:1px solid rgba(168,85,247,.3);border-radius:16px;padding:18px;margin-top:16px}
-.preview-card.show{display:block}
+.preview-card.show{display:block;position:sticky;top:10px;z-index:100;box-shadow:0 18px 42px rgba(0,0,0,.58)}
 #controlDock{display:none}
 .control-dock{margin-top:16px}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
@@ -179,14 +179,6 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
       <div class="field">
         <label>Texte vidéo</label>
         <input type="text" id="series_text" value="Série maintenant disponible !" oninput="sendToIframe()" placeholder="Série maintenant disponible !">
-      </div>
-      <div class="field">
-        <label>Vitesse vidéo <span class="val" id="val-video-speed">100%</span></label>
-        <input type="range" id="video-speed" min="50" max="160" value="100" oninput="onElementSlider(this)">
-      </div>
-      <div class="field">
-        <label>Taille du texte vidéo <span class="val" id="val-video-text-size">100%</span></label>
-        <input type="range" id="video-text-size" min="50" max="180" value="100" oninput="onElementSlider(this)">
       </div>
     </div>
     <div class="upload-grid five">
@@ -313,6 +305,19 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
   <div class="card control-dock" id="controlDock">
     <div class="card-title"><span class="num">⚙</span> Réglages des éléments</div>
     <div id="productControlsMount"></div>
+    <div class="product-control" style="margin-top:18px">
+      <div class="product-control-title">Réglages Vidéo 5s</div>
+      <div class="field-row">
+        <div class="slider-row">
+          <div class="slider-label"><span>Vitesse du défilement</span><span class="val" id="val-video-speed">100%</span></div>
+          <input type="range" id="video-speed" min="50" max="160" value="100" oninput="onElementSlider(this)">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Taille du texte</span><span class="val" id="val-video-text-size">100%</span></div>
+          <input type="range" id="video-text-size" min="50" max="180" value="100" oninput="onElementSlider(this)">
+        </div>
+      </div>
+    </div>
     <button type="button" class="btn" style="margin-top:18px" onclick="resetElementControls()">↻ RÉINITIALISER TOUTES LES JAUGES</button>
   </div>
 
