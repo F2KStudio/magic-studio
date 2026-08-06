@@ -39,8 +39,9 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:60px;letter-spacing:2px;line-he
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .field{display:flex;flex-direction:column;gap:6px}
 .field label{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
-.field input,.field select{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none}
-.field input:focus,.field select:focus{border-color:var(--accent2)}
+.field input,.field select,.field textarea{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none}
+.field textarea{min-height:78px;resize:vertical;line-height:1.35}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent2)}
 .toggle-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
 .toggle-pill{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
 .toggle-pill input{accent-color:var(--accent2)}
@@ -173,10 +174,6 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
         </select>
       </div>
       <div class="field">
-        <label>Couleur du fond</label>
-        <input type="color" id="fallback_bg" value="#06233a" oninput="sendToIframe()">
-      </div>
-      <div class="field">
         <label>Lueur produits</label>
         <div class="glow-control">
           <input type="color" id="product_glow" value="#ffffff" oninput="sendToIframe()">
@@ -184,8 +181,15 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
         </div>
       </div>
       <div class="field">
-        <label>Texte vidéo</label>
-        <input type="text" id="series_text" value="Série maintenant disponible !" oninput="sendToIframe()" placeholder="Série maintenant disponible !">
+        <label>Texte Story / Vidéo</label>
+        <textarea id="series_text" oninput="sendToIframe()" placeholder="Série maintenant disponible !">Série maintenant disponible !</textarea>
+      </div>
+      <div class="field">
+        <label>Couleur du texte</label>
+        <select id="series_text_color" onchange="sendToIframe()">
+          <option value="#ffffff" selected>Blanc</option>
+          <option value="#000000">Noir</option>
+        </select>
       </div>
     </div>
     <div class="upload-grid five">
@@ -276,7 +280,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
       <div class="field-row">
         <div class="field">
           <label>Couleur principale</label>
-          <input type="color" value="#06233a" oninput="document.getElementById('fallback_bg').value=this.value;sendToIframe()">
+          <input type="color" id="fallback_bg" value="#06233a" oninput="sendToIframe()">
         </div>
         <div class="field">
           <label>Couleur secondaire</label>
@@ -289,7 +293,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
       <div class="upload-zone" id="zone-bg">
         <input type="file" accept="image/*" onchange="uploadToCloudinary(this,'bg_url','zone-bg','prev-bg')">
         <span class="upload-icon">🌌</span><div class="spinner-small" style="display:none" id="spin-bg"></div><img class="preview-img" id="prev-bg" style="width:120px;height:58px;object-fit:cover">
-        <span class="upload-label">Fond / Background</span><span class="upload-sub">Optionnel - sinon fond bleu automatique</span>
+        <span class="upload-label">Fond / Background</span><span class="upload-sub">La photo est utilisée sans filtre coloré</span>
       </div>
     </div>
   </div>
@@ -307,7 +311,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
       <button class="tab" onclick="switchGoodsTab('social',this)">Story / Insta</button>
       <button class="tab" onclick="switchGoodsTab('video',this)">Vidéo 5s</button>
     </div>
-    <div class="preview-wrap"><iframe id="goodsIframe" scrolling="no"></iframe></div>
+    <div class="preview-wrap"><iframe id="goodsIframe" scrolling="no" onload="wirePreviewEditing()"></iframe></div>
   </div>
 
   <div class="card control-dock" id="controlDock">
@@ -321,10 +325,19 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
           <input type="range" id="story-text-size" min="50" max="180" value="100" oninput="onElementSlider(this)">
         </div>
         <div class="slider-row">
+          <div class="slider-label"><span>Gauche / Droite</span><span class="val" id="val-story-text-x">0px</span></div>
+          <input type="range" id="story-text-x" min="-500" max="500" value="0" oninput="onElementSlider(this)">
+        </div>
+        <div class="slider-row">
           <div class="slider-label"><span>Monter / Descendre le texte</span><span class="val" id="val-story-text-y">0px</span></div>
           <input type="range" id="story-text-y" min="-500" max="500" value="0" oninput="onElementSlider(this)">
         </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Rotation du texte</span><span class="val" id="val-story-text-rot">0°</span></div>
+          <input type="range" id="story-text-rot" min="-180" max="180" value="0" oninput="onElementSlider(this)">
+        </div>
       </div>
+      <div class="hint">Astuce : glissez le texte directement dans l’aperçu. Cliquez dedans pour l’éditer et appuyez sur Entrée pour passer à la ligne.</div>
     </div>
     <div class="product-control" id="videoTextControls" style="margin-top:18px;display:none">
       <div class="product-control-title">Réglages Vidéo 5s</div>
@@ -338,12 +351,21 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
           <input type="range" id="video-text-size" min="50" max="180" value="100" oninput="onElementSlider(this)">
         </div>
         <div class="slider-row">
+          <div class="slider-label"><span>Gauche / Droite le texte</span><span class="val" id="val-video-text-x">0px</span></div>
+          <input type="range" id="video-text-x" min="-500" max="500" value="0" oninput="onElementSlider(this)">
+        </div>
+        <div class="slider-row">
           <div class="slider-label"><span>Monter / Descendre le texte</span><span class="val" id="val-video-text-y">0px</span></div>
           <input type="range" id="video-text-y" min="-300" max="300" value="0" oninput="onElementSlider(this)">
         </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Rotation du texte</span><span class="val" id="val-video-text-rot">0°</span></div>
+          <input type="range" id="video-text-rot" min="-180" max="180" value="0" oninput="onElementSlider(this)">
+        </div>
       </div>
+      <div class="hint">Astuce : glissez le texte directement dans l’aperçu. Cliquez dedans pour l’éditer et appuyez sur Entrée pour passer à la ligne.</div>
     </div>
-    <div class="product-control" style="margin-top:18px">
+    <div class="product-control" id="animationControls" style="margin-top:18px">
       <div class="product-control-title">✨ Animation HTML</div>
       <div class="field-row" style="grid-template-columns:160px 1fr 1fr;align-items:end">
         <label class="toggle-row"><input type="checkbox" id="animation-enabled" checked onchange="onGoodsAnimationControl()"> Activer</label>
@@ -392,9 +414,13 @@ for (let i = 1; i <= 5; i++) {
 }
 defaultFormatControls.video_speed = '100';
 defaultFormatControls.video_text_size = '100';
+defaultFormatControls.video_text_x = '0';
 defaultFormatControls.video_text_y = '0';
+defaultFormatControls.video_text_rot = '0';
 defaultFormatControls.story_text_size = '100';
+defaultFormatControls.story_text_x = '0';
 defaultFormatControls.story_text_y = '0';
+defaultFormatControls.story_text_rot = '0';
 const formatControls = {};
 Object.keys(goodsConfig).forEach(kind => {
   formatControls[kind] = {...defaultFormatControls};
@@ -412,7 +438,7 @@ function getParams(kind = currentGoodsTab) {
     figure_count:document.getElementById('figure_count').value,
     fallback_bg:document.getElementById('fallback_bg').value,
     fallback_bg2:document.getElementById('fallback_bg2').value,
-    bg_url:urls.bg_url || '',
+    bg_url:backgroundMode === 'upload' ? (urls.bg_url || '') : '',
     left1_url:urls.left1_url || '',
     left2_url:urls.left2_url || '',
     left3_url:urls.left3_url || '',
@@ -426,7 +452,8 @@ function getParams(kind = currentGoodsTab) {
     figure5_url:urls.figure5_url || '',
     product_glow:document.getElementById('product_glow_enabled').checked ? document.getElementById('product_glow').value : 'transparent',
     series_text:document.getElementById('series_text').value,
-    animation:animationEnabled,
+    series_text_color:document.getElementById('series_text_color').value,
+    animation:kind === 'video' ? '0' : animationEnabled,
     animIntensity:document.getElementById('animation-intensity').value,
     animSpeed:document.getElementById('animation-speed').value,
     ...formatControls[kind]
@@ -455,9 +482,13 @@ function saveControlsForFormat(kind = currentGoodsTab) {
   }
   controls.video_speed = document.getElementById('video-speed').value;
   controls.video_text_size = document.getElementById('video-text-size').value;
+  controls.video_text_x = document.getElementById('video-text-x').value;
   controls.video_text_y = document.getElementById('video-text-y').value;
+  controls.video_text_rot = document.getElementById('video-text-rot').value;
   controls.story_text_size = document.getElementById('story-text-size').value;
+  controls.story_text_x = document.getElementById('story-text-x').value;
   controls.story_text_y = document.getElementById('story-text-y').value;
+  controls.story_text_rot = document.getElementById('story-text-rot').value;
 }
 
 function loadControlsForFormat(kind) {
@@ -474,6 +505,7 @@ function loadControlsForFormat(kind) {
   document.getElementById('controlsFormatLabel').textContent = goodsConfig[kind].label;
   document.getElementById('storyTextControls').style.display = kind === 'social' ? 'block' : 'none';
   document.getElementById('videoTextControls').style.display = kind === 'video' ? 'block' : 'none';
+  document.getElementById('animationControls').style.display = kind === 'video' ? 'none' : 'block';
 }
 
 function buildUrl(kind) {
@@ -589,6 +621,56 @@ function sendToIframe() {
   if (!card.classList.contains('show')) return;
   const iframe = document.getElementById('goodsIframe');
   iframe.src = buildUrl(currentGoodsTab);
+}
+
+function wirePreviewEditing() {
+  if (currentGoodsTab !== 'social' && currentGoodsTab !== 'video') return;
+  const iframe = document.getElementById('goodsIframe');
+  const doc = iframe.contentDocument;
+  if (!doc) return;
+  const prefix = currentGoodsTab === 'social' ? 'story' : 'video';
+  const textEl = doc.getElementById(currentGoodsTab === 'social' ? 'storyText' : 'videoText');
+  if (!textEl) return;
+  textEl.contentEditable = 'true';
+  textEl.spellcheck = false;
+  textEl.title = 'Cliquez pour modifier, glissez pour déplacer';
+  textEl.style.cursor = 'move';
+  textEl.style.outline = '2px dashed rgba(255,255,255,.48)';
+  textEl.style.outlineOffset = '8px';
+  textEl.addEventListener('input', () => {
+    document.getElementById('series_text').value = textEl.innerText.replace(/\r/g, '');
+  });
+  let startX = 0, startY = 0, baseX = 0, baseY = 0, moved = false;
+  textEl.addEventListener('pointerdown', event => {
+    startX = event.clientX;
+    startY = event.clientY;
+    baseX = Number(formatControls[currentGoodsTab][prefix + '_text_x'] || 0);
+    baseY = Number(formatControls[currentGoodsTab][prefix + '_text_y'] || 0);
+    moved = false;
+    textEl.setPointerCapture(event.pointerId);
+  });
+  textEl.addEventListener('pointermove', event => {
+    if (!textEl.hasPointerCapture(event.pointerId)) return;
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+    if (Math.abs(dx) + Math.abs(dy) < 4) return;
+    moved = true;
+    const x = Math.max(-500, Math.min(500, Math.round(baseX + dx)));
+    const y = Math.max(-500, Math.min(500, Math.round(baseY + dy)));
+    formatControls[currentGoodsTab][prefix + '_text_x'] = String(x);
+    formatControls[currentGoodsTab][prefix + '_text_y'] = String(y);
+    document.getElementById(prefix + '-text-x').value = x;
+    document.getElementById(prefix + '-text-y').value = y;
+    document.getElementById('val-' + prefix + '-text-x').textContent = x + 'px';
+    document.getElementById('val-' + prefix + '-text-y').textContent = y + 'px';
+    const rot = Number(formatControls[currentGoodsTab][prefix + '_text_rot'] || 0);
+    textEl.style.transform = 'translateX(' + x + 'px) rotate(' + rot + 'deg)';
+    textEl.style.bottom = ((prefix === 'story' ? 110 : 300) - y) + 'px';
+  });
+  textEl.addEventListener('pointerup', event => {
+    if (textEl.hasPointerCapture(event.pointerId)) textEl.releasePointerCapture(event.pointerId);
+    if (moved) sendToIframe();
+  });
 }
 
 function showLinks() {
