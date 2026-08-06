@@ -311,7 +311,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
       <button class="tab" onclick="switchGoodsTab('social',this)">Story / Insta</button>
       <button class="tab" onclick="switchGoodsTab('video',this)">Vidéo 5s</button>
     </div>
-    <div class="preview-wrap"><iframe id="goodsIframe" scrolling="no" onload="wirePreviewInteraction()"></iframe></div>
+    <div class="preview-wrap"><iframe id="goodsIframe" scrolling="no" onload="window.wirePreviewInteraction && window.wirePreviewInteraction()"></iframe></div>
   </div>
 
   <div class="card control-dock" id="controlDock">
@@ -746,6 +746,11 @@ function wirePreviewInteraction() {
   });
 }
 
+// L'iframe peut finir de charger avant que le navigateur ait atteint la
+// déclaration ci-dessus. Ce second branchement garantit l'interaction sans
+// produire d'erreur au premier affichage.
+document.getElementById('goodsIframe').addEventListener('load', wirePreviewInteraction);
+
 function showLinks() {
   const box = document.getElementById('linksBox');
   let html = '<div class="card-title" style="margin-bottom:8px"><span class="num">4</span> Liens HTML goods</div>';
@@ -789,6 +794,10 @@ async function pollGoodsHdResult(jobId, startedAt) {
   }
   if (Date.now() - startedAt > 180000) {
     setHdStatus('La génération prend plus de temps que prévu. Réessayez dans un instant.', 'error');
+    goodsHdPollTimer = null;
+    const button = document.getElementById('generateHdBtn');
+    button.disabled = false;
+    button.textContent = '🚀 GÉNÉRER LES 3 FORMATS HD';
     return;
   }
   try {
@@ -808,7 +817,9 @@ async function pollGoodsHdResult(jobId, startedAt) {
       }
     }
   } catch (_) {}
-  goodsHdPollTimer = setTimeout(() => pollGoodsHdResult(jobId, startedAt), 3000);
+  // Un rendu Make prend généralement 35 à 60 secondes. Interroger toutes les
+  // trois secondes consommait inutilement des opérations Make.
+  goodsHdPollTimer = setTimeout(() => pollGoodsHdResult(jobId, startedAt), 10000);
 }
 
 async function generateGoodsHD() {
@@ -860,8 +871,9 @@ async function generateGoodsHD() {
       body: JSON.stringify(payload)
     });
     if (!response.ok) throw new Error('HTTP ' + response.status);
-    setHdStatus('C’est parti ! Make génère les formats Web, Mobile et Story…', 'success');
-    pollGoodsHdResult(payload.job_id, Date.now());
+    setHdStatus('C’est parti ! Make génère les formats Web, Mobile et Story… Comptez environ 40 à 60 secondes.', 'success');
+    const startedAt = Date.now();
+    goodsHdPollTimer = setTimeout(() => pollGoodsHdResult(payload.job_id, startedAt), 35000);
   } catch (error) {
     setHdStatus('Make n’a pas reçu la demande. Vérifiez que le scénario est activé, puis réessayez. (' + error.message + ')', 'error');
     button.disabled = false;
