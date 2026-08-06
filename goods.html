@@ -807,7 +807,11 @@ async function pollGoodsHdResult(jobId, startedAt) {
       body: JSON.stringify({job_id: jobId})
     });
     if (response.ok) {
-      const result = await response.json();
+      // Make peut renvoyer le JSON avec un type de contenu imprécis. Lire le
+      // texte puis l'analyser évite qu'une réponse valide bloque le suivi.
+      const rawResult = await response.text();
+      let result = {};
+      try { result = JSON.parse(rawResult); } catch (_) {}
       if (result.status === 'completed' && result.desktop_fr && result.mobile_fr && result.desktop_en) {
         renderGoodsHdResults(result);
         setHdStatus('✅ Les trois PNG sont prêts au téléchargement.', 'success');
@@ -865,15 +869,27 @@ async function generateGoodsHD() {
 
     button.textContent = '⏳ ENVOI À MAKE...';
     setHdStatus('Envoi des images et des réglages à Make…');
-    const response = await fetch(MAKE_WEBHOOK_URL, {
+    // Démarre le suivi tout de suite. Le webhook principal peut garder la
+    // connexion ouverte jusqu'à la fin du scénario, mais cela ne doit pas
+    // bloquer l'interface ni empêcher la récupération des PNG.
+    const startedAt = Date.now();
+    goodsHdPollTimer = setTimeout(() => pollGoodsHdResult(payload.job_id, startedAt), 35000);
+    button.textContent = '⏳ GÉNÉRATION EN COURS...';
+    setHdStatus('C’est parti ! Make génère les formats Web, Mobile et Story… Comptez environ 40 à 60 secondes.', 'success');
+
+    fetch(MAKE_WEBHOOK_URL, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(payload)
+    }).then(response => {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+    }).catch(error => {
+      if (goodsHdPollTimer) clearTimeout(goodsHdPollTimer);
+      goodsHdPollTimer = null;
+      setHdStatus('Make n’a pas reçu la demande. Vérifiez que le scénario est activé, puis réessayez. (' + error.message + ')', 'error');
+      button.disabled = false;
+      button.textContent = '🚀 GÉNÉRER LES 3 FORMATS HD';
     });
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    setHdStatus('C’est parti ! Make génère les formats Web, Mobile et Story… Comptez environ 40 à 60 secondes.', 'success');
-    const startedAt = Date.now();
-    goodsHdPollTimer = setTimeout(() => pollGoodsHdResult(payload.job_id, startedAt), 35000);
   } catch (error) {
     setHdStatus('Make n’a pas reçu la demande. Vérifiez que le scénario est activé, puis réessayez. (' + error.message + ')', 'error');
     button.disabled = false;
