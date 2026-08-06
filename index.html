@@ -419,7 +419,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;hei
       </div>
       <div class="sync-note" id="syncNote">Réglages synchronisés entre Desktop FR et Desktop EN.</div>
       <div class="asset-status" id="assetStatus" data-i18n="assetStatusDefault">Images du simulateur : versions originales.</div>
-      <div class="banner-preview-wrap" id="previewWrap">
+      <div class="banner-preview-wrap" id="previewWrap" title="Glissez les éléments pour les déplacer, ou utilisez les jauges">
         <iframe id="bannerIframe" scrolling="no"></iframe>
       </div>
     </div>
@@ -1309,7 +1309,10 @@ function loadIframe(tab) {
   wrap.style.height = Math.round(cfg.h*cfg.scale)+'px';
   iframe.onload = () => { 
     iframeReady = true;
-    requestAnimationFrame(() => applyLiveOverrides());
+    requestAnimationFrame(() => {
+      applyLiveOverrides();
+      wireBannerDragging();
+    });
   };
   iframe.src = buildIframeUrl(tab);
 }
@@ -1321,7 +1324,13 @@ function sendToIframe() {
     const iframe = document.getElementById('bannerIframe');
     if (!iframe.src || iframe.src === 'about:blank') return;
     iframeReady = false;
-    iframe.onload = () => { iframeReady = true; };
+    iframe.onload = () => {
+      iframeReady = true;
+      requestAnimationFrame(() => {
+        applyLiveOverrides();
+        wireBannerDragging();
+      });
+    };
     iframe.src = buildIframeUrl(currentTab);
   }, 250);
 }
@@ -1365,6 +1374,71 @@ function applyLiveOverrides(changedKey = null) {
     if (!changedKey || changedKey.startsWith('leftBooster')) transform('.bl', `translate(${ov.leftBoosterX}px,${ov.leftBoosterY}px) rotate(${-7 + ov.leftBoosterRot}deg) scale(${ov.leftBoosterSize/100})`);
     if (!changedKey || changedKey.startsWith('card1')) transform('.cr1', `translate(${ov.card1X}px,${ov.card1Y}px) rotate(${-10 + ov.card1Rot}deg) scale(${ov.card1Size/100})`);
     if (!changedKey || changedKey.startsWith('card2')) transform('.cr2', `translate(${ov.card2X}px,${ov.card2Y}px) rotate(${7 + ov.card2Rot}deg) scale(${ov.card2Size/100})`);
+  }
+}
+
+function updateDragSlider(id, value) {
+  const slider = document.getElementById(id);
+  if (!slider) return;
+  const bounded = Math.max(Number(slider.min), Math.min(Number(slider.max), Math.round(value)));
+  slider.value = bounded;
+  const numberInput = document.getElementById('num-' + id);
+  if (numberInput) numberInput.value = bounded;
+  const val = document.getElementById('val-' + id);
+  if (val) val.textContent = bounded + 'px';
+  return bounded;
+}
+
+function bindBannerDraggable(doc, selector, xKey, yKey, xSliderId, ySliderId) {
+  const elements = [...doc.querySelectorAll(selector)];
+  elements.forEach(el => {
+    el.draggable = false;
+    el.title = 'Glissez pour déplacer';
+    el.style.cursor = 'grab';
+    el.style.touchAction = 'none';
+    let startX = 0, startY = 0, baseX = 0, baseY = 0;
+    el.addEventListener('pointerdown', event => {
+      event.preventDefault();
+      startX = event.clientX;
+      startY = event.clientY;
+      baseX = Number(overrides[currentTab][xKey] || 0);
+      baseY = Number(overrides[currentTab][yKey] || 0);
+      el.style.cursor = 'grabbing';
+      el.setPointerCapture(event.pointerId);
+    });
+    el.addEventListener('pointermove', event => {
+      if (!el.hasPointerCapture(event.pointerId)) return;
+      const x = updateDragSlider(xSliderId, baseX + event.clientX - startX);
+      const y = updateDragSlider(ySliderId, baseY + event.clientY - startY);
+      if (x === undefined || y === undefined) return;
+      updateLinkedOverride(xKey, x);
+      updateLinkedOverride(yKey, y);
+      applyLiveOverrides(xKey);
+      applyLiveOverrides(yKey);
+    });
+    const finish = event => {
+      if (el.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
+      el.style.cursor = 'grab';
+    };
+    el.addEventListener('pointerup', finish);
+    el.addEventListener('pointercancel', finish);
+  });
+}
+
+function wireBannerDragging() {
+  const iframe = document.getElementById('bannerIframe');
+  let doc;
+  try { doc = iframe.contentDocument; } catch (e) { return; }
+  if (!doc) return;
+  bindBannerDraggable(doc, '.logo-wrap', 'logoX', 'logoY', 'logo-x', 'logo-y');
+  bindBannerDraggable(doc, '.text-zone', 'titreX', 'titreY', 'titre-x', 'titre-y');
+  bindBannerDraggable(doc, '.disp', 'displayX', 'displayY', 'display-x', 'display-y');
+  bindBannerDraggable(doc, '.b-back-l,.b-back-r', 'pairBoosterX', 'pairBoosterY', 'pair-booster-x', 'pair-booster-y');
+  bindBannerDraggable(doc, '.dispo-outer', 'dispoX', 'dispoY', 'dispo-x', 'dispo-y');
+  if (currentTab.startsWith('desktop')) {
+    bindBannerDraggable(doc, '.bl', 'leftBoosterX', 'leftBoosterY', 'left-booster-x', 'left-booster-y');
+    bindBannerDraggable(doc, '.cr1', 'card1X', 'card1Y', 'card1-x', 'card1-y');
+    bindBannerDraggable(doc, '.cr2', 'card2X', 'card2Y', 'card2-x', 'card2-y');
   }
 }
 

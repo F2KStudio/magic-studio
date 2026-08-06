@@ -311,7 +311,7 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
       <button class="tab" onclick="switchGoodsTab('social',this)">Story / Insta</button>
       <button class="tab" onclick="switchGoodsTab('video',this)">Vidéo 5s</button>
     </div>
-    <div class="preview-wrap"><iframe id="goodsIframe" scrolling="no" onload="wirePreviewEditing()"></iframe></div>
+    <div class="preview-wrap"><iframe id="goodsIframe" scrolling="no" onload="wirePreviewInteraction()"></iframe></div>
   </div>
 
   <div class="card control-dock" id="controlDock">
@@ -623,11 +623,84 @@ function sendToIframe() {
   iframe.src = buildUrl(currentGoodsTab);
 }
 
-function wirePreviewEditing() {
-  if (currentGoodsTab !== 'social' && currentGoodsTab !== 'video') return;
+function setGoodsDragControl(id, value) {
+  const control = document.getElementById(id);
+  if (!control) return;
+  const bounded = Math.max(Number(control.min), Math.min(Number(control.max), Math.round(value)));
+  control.value = bounded;
+  const val = document.getElementById('val-' + id);
+  if (val) val.textContent = bounded + 'px';
+  return bounded;
+}
+
+function applyGoodsDragPreview(el, type, index, x, y) {
+  if (type === 'left') {
+    const size = Number(formatControls[currentGoodsTab]['left' + index + '_size'] || 100) / 100;
+    const rot = Number(formatControls[currentGoodsTab]['left' + index + '_rot'] || 0);
+    if (currentGoodsTab === 'video') {
+      el.style.setProperty('--user-x', x + 'px');
+      el.style.setProperty('--user-y', y + 'px');
+    } else if (index === 1) {
+      const perspective = currentGoodsTab === 'social' ? 420 : (currentGoodsTab === 'mobile' ? 260 : 360);
+      const rotateY = currentGoodsTab === 'mobile' ? -14 : -16;
+      const baseRot = currentGoodsTab === 'mobile' ? -5 : -6;
+      el.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + size + ') perspective(' + perspective + 'px) rotateY(' + rotateY + 'deg) rotateZ(' + (baseRot + rot) + 'deg)';
+    } else {
+      el.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + size + ') rotate(' + rot + 'deg)';
+    }
+    return;
+  }
+  const size = Number(formatControls[currentGoodsTab]['product' + index + '_size'] || 118) / 100;
+  const rot = Number(formatControls[currentGoodsTab]['product' + index + '_rot'] || 0);
+  if (currentGoodsTab === 'video') {
+    el.style.setProperty('--item-x', x + 'px');
+    el.style.setProperty('--item-y', y + 'px');
+  } else {
+    el.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + size + ') rotate(' + rot + 'deg)';
+  }
+}
+
+function bindGoodsDraggable(el, type, index) {
+  if (!el || el.classList.contains('missing')) return;
+  const prefix = type === 'left' ? 'left' + index : 'product' + index;
+  el.draggable = false;
+  el.title = 'Glissez pour déplacer';
+  el.style.cursor = 'grab';
+  el.style.touchAction = 'none';
+  let startX = 0, startY = 0, baseX = 0, baseY = 0;
+  el.addEventListener('pointerdown', event => {
+    event.preventDefault();
+    startX = event.clientX;
+    startY = event.clientY;
+    baseX = Number(formatControls[currentGoodsTab][prefix + '_x'] || 0);
+    baseY = Number(formatControls[currentGoodsTab][prefix + '_y'] || 0);
+    el.style.cursor = 'grabbing';
+    el.setPointerCapture(event.pointerId);
+  });
+  el.addEventListener('pointermove', event => {
+    if (!el.hasPointerCapture(event.pointerId)) return;
+    const x = setGoodsDragControl(prefix.replace(/_/g, '-') + '-x', baseX + event.clientX - startX);
+    const y = setGoodsDragControl(prefix.replace(/_/g, '-') + '-y', baseY + event.clientY - startY);
+    if (x === undefined || y === undefined) return;
+    formatControls[currentGoodsTab][prefix + '_x'] = String(x);
+    formatControls[currentGoodsTab][prefix + '_y'] = String(y);
+    applyGoodsDragPreview(el, type, index, x, y);
+  });
+  const finish = event => {
+    if (el.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
+    el.style.cursor = 'grab';
+  };
+  el.addEventListener('pointerup', finish);
+  el.addEventListener('pointercancel', finish);
+}
+
+function wirePreviewInteraction() {
   const iframe = document.getElementById('goodsIframe');
   const doc = iframe.contentDocument;
   if (!doc) return;
+  for (let i = 1; i <= 3; i++) bindGoodsDraggable(doc.querySelector('.left' + i), 'left', i);
+  for (let i = 1; i <= 5; i++) bindGoodsDraggable(doc.querySelector('.fig' + i), 'product', i);
+  if (currentGoodsTab !== 'social' && currentGoodsTab !== 'video') return;
   const prefix = currentGoodsTab === 'social' ? 'story' : 'video';
   const textEl = doc.getElementById(currentGoodsTab === 'social' ? 'storyText' : 'videoText');
   if (!textEl) return;
