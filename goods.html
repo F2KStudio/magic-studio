@@ -824,14 +824,26 @@ async function generateGoodsHD() {
   if (goodsHdPollTimer) clearTimeout(goodsHdPollTimer);
 
   try {
+    // Fige d'abord le dernier réglage affiché, y compris un déplacement à la souris.
+    saveControlsForFormat(currentGoodsTab);
     const payload = getParams(currentGoodsTab);
     payload.job_id = 'goods_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     payload.request_type = 'hd';
     payload.format_controls = JSON.stringify(formatControls);
+    payload.desktop_controls = JSON.stringify(formatControls.desktop);
+    payload.mobile_controls = JSON.stringify(formatControls.mobile);
+    payload.social_controls = JSON.stringify(formatControls.social);
     payload.desktop_url = buildUrl('desktop');
     payload.mobile_url = buildUrl('mobile');
     payload.social_url = buildUrl('social');
     payload.video_url = buildUrl('video');
+    // Champs plats pratiques pour Make : chaque module peut aussi les mapper
+    // sans avoir à analyser le JSON format_controls.
+    ['desktop', 'mobile', 'social'].forEach(format => {
+      Object.entries(formatControls[format]).forEach(([key, value]) => {
+        payload[format + '_' + key] = value;
+      });
+    });
     if (payload.background_mode === 'gradient') payload.bg_url = '';
 
     // Le scénario Make est linéaire : les emplacements non utilisés réemploient
