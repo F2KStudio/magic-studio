@@ -389,7 +389,10 @@ iframe{width:100%;border:0;display:block;transform-origin:top left}
 const CLOUD_NAME = "dyvmftiyu";
 const UPLOAD_PRESET = "banner_generator";
 const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/62irmz92j6x8l6a4d1v9mnpxfbtmlwmu";
-const BASE_URL = new URL('.', window.location.href).href.replace(/\/$/, '');
+// Doppio s'exécute sur un serveur distant et ne peut jamais ouvrir une URL
+// locale file://. Les pages de rendu utilisent donc toujours leur adresse
+// publique, même lorsque le formulaire est testé depuis le Mac.
+const BASE_URL = 'https://chatgpt-lang.github.io/banner-cpc-et-dbz';
 const urls = {};
 let currentGoodsTab = 'desktop';
 const goodsConfig = {
