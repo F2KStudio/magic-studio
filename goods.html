@@ -32,6 +32,8 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:60px;letter-spacing:2px;line-he
 .upload-icon{font-size:26px}
 .upload-label{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
 .upload-sub{font-size:10px;color:var(--muted);opacity:.65}
+.quality-hint{display:block;margin-top:3px;font-size:10px;line-height:1.25;font-weight:700;color:#86efac}
+.quality-hint.warn{color:#fbbf24}
 .preview-img{width:58px;height:58px;object-fit:contain;border-radius:6px;display:none}
 .upload-zone.has-file .preview-img{display:block}.upload-zone.has-file .upload-icon,.upload-zone.uploading .upload-icon{display:none}
 .spinner-small{width:24px;height:24px;border:2px solid rgba(168,85,247,.3);border-top-color:var(--accent2);border-radius:50%;animation:spin .8s linear infinite}
@@ -522,10 +524,24 @@ async function uploadToCloudinary(input, key, zoneId, prevId) {
   const prev = document.getElementById(prevId);
   const spin = document.getElementById('spin-' + zoneId.replace('zone-',''));
   const label = zone.querySelector('.upload-label');
+  let qualityHint = zone.querySelector('.quality-hint');
+  if (!qualityHint) {
+    qualityHint = document.createElement('span');
+    qualityHint.className = 'quality-hint';
+    zone.appendChild(qualityHint);
+  }
   zone.classList.add('uploading'); zone.classList.remove('has-file','error');
   if (spin) spin.style.display = 'block';
   label.textContent = 'Upload...';
   try {
+    const dimensions = await readImageDimensions(file);
+    const minimumLongEdge = key === 'bg_url' ? 1920 : (key.startsWith('figure') ? 1400 : 700);
+    const longEdge = Math.max(dimensions.width, dimensions.height);
+    const isSmall = longEdge < minimumLongEdge;
+    qualityHint.classList.toggle('warn', isSmall);
+    qualityHint.textContent = dimensions.width + ' × ' + dimensions.height + ' px' +
+      (isSmall ? ' — risque de flou en HD' : ' — qualité adaptée');
+
     const fd = new FormData();
     fd.append('file', file);
     fd.append('upload_preset', UPLOAD_PRESET);
@@ -544,7 +560,26 @@ async function uploadToCloudinary(input, key, zoneId, prevId) {
     zone.classList.add('error');
     if (spin) spin.style.display = 'none';
     label.textContent = 'Erreur';
+    qualityHint.classList.add('warn');
+    qualityHint.textContent = 'Impossible de vérifier ou charger cette image';
   }
+}
+
+function readImageDimensions(file) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      const dimensions = {width:image.naturalWidth, height:image.naturalHeight};
+      URL.revokeObjectURL(objectUrl);
+      resolve(dimensions);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Image illisible'));
+    };
+    image.src = objectUrl;
+  });
 }
 
 function updateFigureVisibility() {
