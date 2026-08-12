@@ -497,6 +497,7 @@ function saveControlsForFormat(kind = currentGoodsTab) {
 }
 
 function loadControlsForFormat(kind) {
+  updateMovementRanges(kind);
   const controls = formatControls[kind];
   Object.entries(controls).forEach(([key, value]) => {
     const id = key.replace(/_/g, '-');
@@ -511,6 +512,31 @@ function loadControlsForFormat(kind) {
   document.getElementById('storyTextControls').style.display = kind === 'social' ? 'block' : 'none';
   document.getElementById('videoTextControls').style.display = kind === 'video' ? 'block' : 'none';
   document.getElementById('animationControls').style.display = kind === 'video' ? 'none' : 'block';
+}
+
+function updateMovementRanges(kind) {
+  const cfg = goodsConfig[kind];
+  if (!cfg) return;
+  const horizontalLimit = cfg.w;
+  const verticalLimit = cfg.h;
+  const movementControls = [];
+  for (let i = 1; i <= 3; i++) {
+    movementControls.push(document.getElementById('left' + i + '-x'));
+    movementControls.push(document.getElementById('left' + i + '-y'));
+  }
+  for (let i = 1; i <= 5; i++) {
+    movementControls.push(document.getElementById('product' + i + '-x'));
+    movementControls.push(document.getElementById('product' + i + '-y'));
+  }
+  movementControls.push(document.getElementById('story-text-x'));
+  movementControls.push(document.getElementById('story-text-y'));
+  movementControls.push(document.getElementById('video-text-x'));
+  movementControls.push(document.getElementById('video-text-y'));
+  movementControls.filter(Boolean).forEach(control => {
+    const limit = control.id.endsWith('-x') ? horizontalLimit : verticalLimit;
+    control.min = String(-limit);
+    control.max = String(limit);
+  });
 }
 
 function buildUrl(kind) {
@@ -766,14 +792,11 @@ function wirePreviewInteraction() {
     const dy = event.clientY - startY;
     if (Math.abs(dx) + Math.abs(dy) < 4) return;
     moved = true;
-    const x = Math.max(-500, Math.min(500, Math.round(baseX + dx)));
-    const y = Math.max(-500, Math.min(500, Math.round(baseY + dy)));
+    const x = setGoodsDragControl(prefix + '-text-x', baseX + dx);
+    const y = setGoodsDragControl(prefix + '-text-y', baseY + dy);
+    if (x === undefined || y === undefined) return;
     formatControls[currentGoodsTab][prefix + '_text_x'] = String(x);
     formatControls[currentGoodsTab][prefix + '_text_y'] = String(y);
-    document.getElementById(prefix + '-text-x').value = x;
-    document.getElementById(prefix + '-text-y').value = y;
-    document.getElementById('val-' + prefix + '-text-x').textContent = x + 'px';
-    document.getElementById('val-' + prefix + '-text-y').textContent = y + 'px';
     const rot = Number(formatControls[currentGoodsTab][prefix + '_text_rot'] || 0);
     textEl.style.transform = 'translateX(' + x + 'px) rotate(' + rot + 'deg)';
     textEl.style.bottom = ((prefix === 'story' ? 110 : 300) - y) + 'px';
